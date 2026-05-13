@@ -3,8 +3,8 @@ module github.com/UniquityVentures/lamu/plugins/p_dashboard
 go 1.26.1
 
 require (
-	github.com/UniquityVentures/lamu v0.4.6
-	github.com/UniquityVentures/lamu/plugins/p_users v0.4.6
+	github.com/UniquityVentures/lamu v0.4.7
+	github.com/UniquityVentures/lamu/plugins/p_users v0.4.7
 	maragu.dev/gomponents v1.3.0
 )
 

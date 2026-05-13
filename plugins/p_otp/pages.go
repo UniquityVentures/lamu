@@ -7,6 +7,58 @@ import (
 	"github.com/UniquityVentures/lamu/registry"
 )
 
+const otpForgotPasswordLoginLinkKey = "otp.LoginForgotPasswordLink"
+
+func patchUsersLoginPageWithOtpForgotLink(page components.PageInterface) components.PageInterface {
+	scaffold, ok := page.(*components.ShellAuthScaffold)
+	if !ok {
+		panic("Base page for login page was not ShellAuthScaffold")
+	}
+	if otpForgotPasswordLinkPresent(scaffold) {
+		return scaffold
+	}
+
+	col, ok := scaffold.Children[0].(*components.ContainerColumn)
+	if !ok || len(col.Children) < 2 {
+		panic("p_otp: unexpected login page layout (expect ContainerColumn with ≥2 children)")
+	}
+	formPost, ok := col.Children[1].(*components.FormListenBoostedPost)
+	if !ok || len(formPost.Children) != 1 {
+		panic("p_otp: unexpected login form wrapper layout")
+	}
+	fc, ok := formPost.Children[0].(*components.FormComponent[p_users.User])
+	if !ok || fc.GetKey() != "p_users.AuthForm" {
+		panic("p_otp: login FormListenBoostedPost must contain Auth FormComponent")
+	}
+
+	forgot := &components.ButtonLink{
+		Page:  components.Page{Key: otpForgotPasswordLoginLinkKey},
+		Label: "Forgot password?",
+		Link:  lamu.RoutePath("otp.ForgotPasswordRoute", nil),
+	}
+
+	newPost := *formPost
+	newPost.Children = []components.PageInterface{fc, forgot}
+
+	newCol := *col
+	newCol.Children = append([]components.PageInterface(nil), col.Children...)
+	newCol.Children[1] = &newPost
+
+	newScaffold := *scaffold
+	newScaffold.Children = []components.PageInterface{&newCol}
+
+	return &newScaffold
+}
+
+func otpForgotPasswordLinkPresent(root components.ParentInterface) bool {
+	for _, bl := range components.FindChildren[*components.ButtonLink](root) {
+		if bl.GetKey() == otpForgotPasswordLoginLinkKey {
+			return true
+		}
+	}
+	return false
+}
+
 func pluginPages() lamu.PluginFeatures[components.PageInterface] {
 	auth := pageEntriesOtpAuth()
 	prefs := pageEntriesOtpPreferences()
@@ -20,19 +72,4 @@ func pluginPages() lamu.PluginFeatures[components.PageInterface] {
 			{Key: "p_users.LoginPage", Value: patchUsersLoginPageWithOtpForgotLink},
 		},
 	}
-}
-
-func patchUsersLoginPageWithOtpForgotLink(page components.PageInterface) components.PageInterface {
-	if scaffold, ok := page.(*components.ShellAuthScaffold); ok {
-		components.InsertChildAfter(scaffold,
-			"p_users.AuthForm",
-			func(*components.FormComponent[p_users.User]) *components.ButtonLink {
-				return &components.ButtonLink{
-					Label: "Forgot password?",
-					Link:  lamu.RoutePath("otp.ForgotPasswordRoute", nil),
-				}
-			})
-		return scaffold
-	}
-	panic("Base page for login page was not ShellAuthScaffold")
 }

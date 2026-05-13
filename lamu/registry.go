@@ -6,6 +6,8 @@ import (
 	"github.com/UniquityVentures/lamu/views"
 )
 
+// FillRegistry merges feature bundles from each plugin, then assigns an immutable registry after
+// each merge by calling [PluginFeatures.Build]. Patches must be pure and idempotent; see package lamu doc.
 func FillRegistry[T any](features []func() PluginFeatures[T], targetRegistry *registry.ImmutableRegistry[T]) {
 	finalFeatures := PluginFeatures[T]{}
 	for _, feature := range features {

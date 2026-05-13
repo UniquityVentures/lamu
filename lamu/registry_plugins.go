@@ -22,11 +22,18 @@ const (
 	PluginTypeService
 )
 
+// PluginFeatures collects registry entries plus optional patches keyed like Entries.
+// See package doc for patch purity and idempotency requirements.
 type PluginFeatures[T any] struct {
 	Entries []registry.Pair[string, T]
 	Patches []registry.Pair[string, func(T) T]
 }
 
+// Build returns registry pairs with patches applied in registration order.
+//
+// Patches must be pure and idempotent: they must not mutate their argument T in place, and
+// applying the same patch again to its own output must yield an equivalent result. Registry
+// assembly may invoke Build more than once while merging plugins.
 func (f *PluginFeatures[T]) Build() []registry.Pair[string, T] {
 	entries := slices.Clone(f.Entries)
 	for i := range len(entries) {
@@ -40,6 +47,7 @@ func (f *PluginFeatures[T]) Build() []registry.Pair[string, T] {
 	return entries
 }
 
+// Merge concatenates Entries and Patches. Order is preserved so patch application order stays deterministic.
 func (f PluginFeatures[T]) Merge(others ...PluginFeatures[T]) PluginFeatures[T] {
 	result := f
 	for _, other := range others {
