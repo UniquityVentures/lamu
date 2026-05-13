@@ -55,16 +55,16 @@ type Plugin struct {
 	URL              *url.URL
 	VerboseName      string
 	Roles            []string
-	Migrations       PluginFeatures[UsefulFilesystem]
-	Views            PluginFeatures[*views.View]
-	Routes           PluginFeatures[Route]
-	Pages            PluginFeatures[components.PageInterface]
-	Models           PluginFeatures[any]
-	Layers           PluginFeatures[views.GlobalLayer]
-	Generators       PluginFeatures[Generator]
-	DBInitHooks      PluginFeatures[DBInitHook]
-	Configs          PluginFeatures[Config]
-	CommandFactories PluginFeatures[CommandFactory]
+	Migrations       func() PluginFeatures[UsefulFilesystem]
+	Views            func() PluginFeatures[*views.View]
+	Routes           func() PluginFeatures[Route]
+	Pages            func() PluginFeatures[components.PageInterface]
+	Models           func() PluginFeatures[any]
+	Layers           func() PluginFeatures[views.GlobalLayer]
+	Generators       func() PluginFeatures[Generator]
+	DBInitHooks      func() PluginFeatures[DBInitHook]
+	Configs          func() PluginFeatures[Config]
+	CommandFactories func() PluginFeatures[CommandFactory]
 }
 
 var RegistryPlugin *registry.ImmutableRegistry[Plugin] = &registry.ImmutableRegistry[Plugin]{}
@@ -88,24 +88,30 @@ func CorePlugin(db *gorm.DB, config LamuConfig) registry.Pair[string, Plugin] {
 			},
 			VerboseName: "Core",
 			Roles:       []string{"superuser", "admin"},
-			Views: PluginFeatures[*views.View]{
-				Entries: []registry.Pair[string, *views.View]{
-					{Key: "core.HomeView", Value: GetPageView("core.HomePage")},
-				},
+			Views: func() PluginFeatures[*views.View] {
+				return PluginFeatures[*views.View]{
+					Entries: []registry.Pair[string, *views.View]{
+						{Key: "core.HomeView", Value: GetPageView("core.HomePage")},
+					},
+				}
 			},
-			Pages: PluginFeatures[components.PageInterface]{
-				Entries: []registry.Pair[string, components.PageInterface]{
-					{Key: "core.HomePage", Value: components.ShellBase{}},
-				},
+			Pages: func() PluginFeatures[components.PageInterface] {
+				return PluginFeatures[components.PageInterface]{
+					Entries: []registry.Pair[string, components.PageInterface]{
+						{Key: "core.HomePage", Value: components.ShellBase{}},
+					},
+				}
 			},
-			Layers: layers,
-			Routes: PluginFeatures[Route]{
-				Entries: []registry.Pair[string, Route]{
-					{Key: "core.HomeRoute", Value: Route{Path: "/", Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						w.WriteHeader(http.StatusOK)
-						w.Write([]byte("Hello, World!"))
-					})}},
-				},
+			Layers: func() PluginFeatures[views.GlobalLayer] { return layers },
+			Routes: func() PluginFeatures[Route] {
+				return PluginFeatures[Route]{
+					Entries: []registry.Pair[string, Route]{
+						{Key: "core.HomeRoute", Value: Route{Path: "/", Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+							w.WriteHeader(http.StatusOK)
+							w.Write([]byte("Hello, World!"))
+						})}},
+					},
+				}
 			},
 		},
 	}

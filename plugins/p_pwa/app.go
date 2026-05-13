@@ -22,9 +22,9 @@ func GetPlugin() registry.Pair[string, lamu.Plugin] {
 			Icon:        "cpu-chip",
 			URL:         u,
 			VerboseName: "PWA",
-			Configs:     pluginConfigs(),
-			Views:       pluginViews(),
-			Routes:      pluginRoutes(),
+			Configs: pluginConfigs,
+			Views:   pluginViews,
+			Routes:  pluginRoutes,
 		},
 	}
 }

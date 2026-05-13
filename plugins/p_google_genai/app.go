@@ -25,7 +25,7 @@ func GetPlugin() registry.Pair[string, lamu.Plugin] {
 			Icon:        "sparkles",
 			URL:         u,
 			VerboseName: "Google GenAI",
-			Configs:     pluginConfigs(),
+			Configs:     pluginConfigs,
 		},
 	}
 }

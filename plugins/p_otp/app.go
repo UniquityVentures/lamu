@@ -25,10 +25,10 @@ func GetPlugin() registry.Pair[string, lamu.Plugin] {
 			URL:         u,
 			VerboseName: "OTP Preferences",
 			Roles:       []string{""},
-			Views:       pluginViews(),
-			Pages:       pluginPages(),
-			Routes:      pluginRoutes(),
-			Models:      pluginModels(),
+			Views:   pluginViews,
+			Pages:   pluginPages,
+			Routes:  pluginRoutes,
+			Models:  pluginModels,
 		},
 	}
 }

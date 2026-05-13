@@ -6,42 +6,54 @@ import (
 	"github.com/UniquityVentures/lamu/views"
 )
 
-func BuildAllRegistries(allPlugins []registry.Pair[string, Plugin]) {
-	commandFactories := PluginFeatures[CommandFactory]{}
-	configs := PluginFeatures[Config]{}
-	dbInitHooks := PluginFeatures[DBInitHook]{}
-	generators := PluginFeatures[Generator]{}
-	layers := PluginFeatures[views.GlobalLayer]{}
-	migrations := PluginFeatures[UsefulFilesystem]{}
-	models := PluginFeatures[any]{}
-	pages := PluginFeatures[components.PageInterface]{}
-	routes := PluginFeatures[Route]{}
-	views := PluginFeatures[*views.View]{}
-
-	for _, pair := range allPlugins {
-		plugin := pair.Value
-
-		commandFactories.Merge(plugin.CommandFactories)
-		configs.Merge(plugin.Configs)
-		dbInitHooks.Merge(plugin.DBInitHooks)
-		generators.Merge(plugin.Generators)
-		layers.Merge(plugin.Layers)
-		migrations.Merge(plugin.Migrations)
-		models.Merge(plugin.Models)
-		pages.Merge(plugin.Pages)
-		routes.Merge(plugin.Routes)
-		views.Merge(plugin.Views)
+func FillRegistry[T any](features []func() PluginFeatures[T], targetRegistry *registry.ImmutableRegistry[T]) {
+	finalFeatures := PluginFeatures[T]{}
+	for _, feature := range features {
+		if feature == nil {
+			continue
+		}
+		finalFeatures.Merge(feature())
+		*targetRegistry = registry.NewImmutableRegistry(finalFeatures.Build())
 	}
+}
 
-	*RegistryCommand = registry.NewImmutableRegistry(commandFactories.Build())
-	*RegistryConfig = registry.NewImmutableRegistry(configs.Build())
-	*RegistryDBInit = registry.NewImmutableRegistry(dbInitHooks.Build())
-	*RegistryGenerator = registry.NewImmutableRegistry(generators.Build())
-	*RegistryLayer = registry.NewImmutableRegistry(layers.Build())
-	*RegistryMigrations = registry.NewImmutableRegistry(migrations.Build())
-	*RegistryModel = registry.NewImmutableRegistry(models.Build())
-	*RegistryPage = registry.NewImmutableRegistry(pages.Build())
-	*RegistryPlugin = registry.NewImmutableRegistry(allPlugins)
-	*RegistryRoute = registry.NewImmutableRegistry(routes.Build())
-	*RegistryView = registry.NewImmutableRegistry(views.Build())
+func MapSlice[T any, R any](slice []T, mapper func(T) R) []R {
+	result := make([]R, len(slice))
+	for i, v := range slice {
+		result[i] = mapper(v)
+	}
+	return result
+}
+
+func BuildAllRegistries(allPlugins []registry.Pair[string, Plugin]) {
+	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[CommandFactory] {
+		return pair.Value.CommandFactories
+	}), RegistryCommand)
+	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[Config] {
+		return pair.Value.Configs
+	}), RegistryConfig)
+	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[DBInitHook] {
+		return pair.Value.DBInitHooks
+	}), RegistryDBInit)
+	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[Generator] {
+		return pair.Value.Generators
+	}), RegistryGenerator)
+	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[views.GlobalLayer] {
+		return pair.Value.Layers
+	}), RegistryLayer)
+	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[UsefulFilesystem] {
+		return pair.Value.Migrations
+	}), RegistryMigrations)
+	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[any] {
+		return pair.Value.Models
+	}), RegistryModel)
+	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[components.PageInterface] {
+		return pair.Value.Pages
+	}), RegistryPage)
+	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[Route] {
+		return pair.Value.Routes
+	}), RegistryRoute)
+	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[*views.View] {
+		return pair.Value.Views
+	}), RegistryView)
 }

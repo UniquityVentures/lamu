@@ -22,7 +22,7 @@ func GetPlugin() registry.Pair[string, lamu.Plugin] {
 			Icon:        "arrow-path",
 			URL:         u,
 			VerboseName: "Live reload",
-			Routes:      pluginRoutes(),
+			Routes:      pluginRoutes,
 		},
 	}
 }

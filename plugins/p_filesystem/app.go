@@ -25,12 +25,12 @@ func GetPlugin() registry.Pair[string, lamu.Plugin] {
 			URL:         u,
 			VerboseName: "Filesystem",
 			Roles:       []string{"superuser", "admin"},
-			Migrations:  pluginMigrations(),
-			Views:       pluginViews(),
-			Pages:       pluginPages(),
-			Routes:      pluginRoutes(),
-			Configs:     pluginConfigs(),
-			Generators:  pluginGenerators(),
+			Migrations:  pluginMigrations,
+			Views:       pluginViews,
+			Pages:       pluginPages,
+			Routes:      pluginRoutes,
+			Configs:     pluginConfigs,
+			Generators:  pluginGenerators,
 		},
 	}
 }
