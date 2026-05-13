@@ -47,7 +47,7 @@ func pageEntriesOtpAuth() []registry.Pair[string, components.PageInterface] {
 							Children: []components.PageInterface{
 								components.ButtonLink{
 									Label: "Back to Login",
-									Link:  lamu.RoutePath("users.LoginRoute", nil),
+									Link:  lamu.RoutePath("p_users.LoginRoute", nil),
 								},
 							},
 						},
@@ -95,7 +95,7 @@ func pageEntriesOtpAuth() []registry.Pair[string, components.PageInterface] {
 							Children: []components.PageInterface{
 								components.ButtonLink{
 									Label: "Back to Login",
-									Link:  lamu.RoutePath("users.LoginRoute", nil),
+									Link:  lamu.RoutePath("p_users.LoginRoute", nil),
 								},
 							},
 						},
@@ -169,7 +169,7 @@ func pageEntriesOtpAuth() []registry.Pair[string, components.PageInterface] {
 							Children: []components.PageInterface{
 								components.ButtonLink{
 									Label: "Cancel",
-									Link:  lamu.RoutePath("users.LoginRoute", nil),
+									Link:  lamu.RoutePath("p_users.LoginRoute", nil),
 								},
 							},
 						},
@@ -188,7 +188,7 @@ func pageEntriesOtpAuth() []registry.Pair[string, components.PageInterface] {
 							Children: []components.PageInterface{
 								components.ButtonLink{
 									Icon:    "arrow-left",
-									Link:    lamu.RoutePath("users.LoginRoute", nil),
+									Link:    lamu.RoutePath("p_users.LoginRoute", nil),
 									Classes: "btn-ghost btn-square",
 								},
 								components.FieldTitle{

@@ -5,96 +5,110 @@ import (
 	"github.com/UniquityVentures/lamu/registry"
 )
 
+const (
+	// Trailing slashes so AppUrl+"{…}/" concatenation yields whole wildcard segments for ServeMux.
+	AppUrl  = "/users/"
+	RoleUrl = "/users/roles/"
+	// Routes keyed by DB user ID live under …/u/{id}/… so literals like …/roles/… never match …/{id}/….
+	UserIDRoutePrefix = AppUrl + "u/"
+)
+
 func pluginRoutes() lamu.PluginFeatures[lamu.Route] {
 	return lamu.PluginFeatures[lamu.Route]{
+		Patches: []registry.Pair[string, func(lamu.Route) lamu.Route]{
+			{
+				Key: "core.HomeRoute",
+				Value: func(old lamu.Route) lamu.Route {
+					old.Path = "/"
+					old.Handler = lamu.NewDynamicView("core.HomeView")
+					return old
+				},
+			},
+		},
 		Entries: []registry.Pair[string, lamu.Route]{
-			{Key: "base.HomeRoute", Value: lamu.Route{
-				Path:    "/",
-				Handler: lamu.NewDynamicView("base.HomeView"),
-			}},
-			{Key: "users.ListRoute", Value: lamu.Route{
+			{Key: "p_users.ListRoute", Value: lamu.Route{
 				Path:    AppUrl,
-				Handler: lamu.NewDynamicView("users.ListView"),
+				Handler: lamu.NewDynamicView("p_users.ListView"),
 			}},
-			{Key: "users.CreateRoute", Value: lamu.Route{
+			{Key: "p_users.CreateRoute", Value: lamu.Route{
 				Path:    AppUrl + "create/",
-				Handler: lamu.NewDynamicView("users.CreateView"),
+				Handler: lamu.NewDynamicView("p_users.CreateView"),
 			}},
-			{Key: "users.DetailRoute", Value: lamu.Route{
-				Path:    AppUrl + "{id}/",
-				Handler: lamu.NewDynamicView("users.DetailView"),
+			{Key: "p_users.DetailRoute", Value: lamu.Route{
+				Path:    UserIDRoutePrefix + "{id}/",
+				Handler: lamu.NewDynamicView("p_users.DetailView"),
 			}},
-			{Key: "users.UpdateRoute", Value: lamu.Route{
-				Path:    AppUrl + "{id}/edit/",
-				Handler: lamu.NewDynamicView("users.UpdateView"),
+			{Key: "p_users.UpdateRoute", Value: lamu.Route{
+				Path:    UserIDRoutePrefix + "{id}/edit/",
+				Handler: lamu.NewDynamicView("p_users.UpdateView"),
 			}},
-			{Key: "users.SelfDetailRoute", Value: lamu.Route{
+			{Key: "p_users.SelfDetailRoute", Value: lamu.Route{
 				Path:    AppUrl + "self/",
-				Handler: lamu.NewDynamicView("users.SelfDetailView"),
+				Handler: lamu.NewDynamicView("p_users.SelfDetailView"),
 			}},
-			{Key: "users.SelfUpdateRoute", Value: lamu.Route{
+			{Key: "p_users.SelfUpdateRoute", Value: lamu.Route{
 				Path:    AppUrl + "self/edit/",
-				Handler: lamu.NewDynamicView("users.SelfUpdateView"),
+				Handler: lamu.NewDynamicView("p_users.SelfUpdateView"),
 			}},
-			{Key: "users.SelfChangePasswordRoute", Value: lamu.Route{
+			{Key: "p_users.SelfChangePasswordRoute", Value: lamu.Route{
 				Path:    AppUrl + "self/change-password/",
-				Handler: lamu.NewDynamicView("users.SelfChangePasswordView"),
+				Handler: lamu.NewDynamicView("p_users.SelfChangePasswordView"),
 			}},
-			{Key: "users.DeleteRoute", Value: lamu.Route{
-				Path:    AppUrl + "{id}/delete/",
-				Handler: lamu.NewDynamicView("users.DeleteView"),
+			{Key: "p_users.DeleteRoute", Value: lamu.Route{
+				Path:    UserIDRoutePrefix + "{id}/delete/",
+				Handler: lamu.NewDynamicView("p_users.DeleteView"),
 			}},
-			{Key: "users.ChangePasswordRoute", Value: lamu.Route{
-				Path:    AppUrl + "{id}/change-password/",
-				Handler: lamu.NewDynamicView("users.ChangePasswordView"),
+			{Key: "p_users.ChangePasswordRoute", Value: lamu.Route{
+				Path:    UserIDRoutePrefix + "{id}/change-password/",
+				Handler: lamu.NewDynamicView("p_users.ChangePasswordView"),
 			}},
-			{Key: "users.SelectRoute", Value: lamu.Route{
+			{Key: "p_users.SelectRoute", Value: lamu.Route{
 				Path:    AppUrl + "select/",
-				Handler: lamu.NewDynamicView("users.SelectView"),
+				Handler: lamu.NewDynamicView("p_users.SelectView"),
 			}},
-			{Key: "users.RoleSelectRoute", Value: lamu.Route{
+			{Key: "p_users.RoleSelectRoute", Value: lamu.Route{
 				Path:    RoleUrl + "select/",
-				Handler: lamu.NewDynamicView("users.RoleSelectView"),
+				Handler: lamu.NewDynamicView("p_users.RoleSelectView"),
 			}},
-			{Key: "users.RoleListRoute", Value: lamu.Route{
+			{Key: "p_users.RoleListRoute", Value: lamu.Route{
 				Path:    RoleUrl,
-				Handler: lamu.NewDynamicView("users.RoleListView"),
+				Handler: lamu.NewDynamicView("p_users.RoleListView"),
 			}},
-			{Key: "users.RoleCreateRoute", Value: lamu.Route{
+			{Key: "p_users.RoleCreateRoute", Value: lamu.Route{
 				Path:    RoleUrl + "create/",
-				Handler: lamu.NewDynamicView("users.RoleCreateView"),
+				Handler: lamu.NewDynamicView("p_users.RoleCreateView"),
 			}},
-			{Key: "users.RoleDetailRoute", Value: lamu.Route{
+			{Key: "p_users.RoleDetailRoute", Value: lamu.Route{
 				Path:    RoleUrl + "{id}/",
-				Handler: lamu.NewDynamicView("users.RoleDetailView"),
+				Handler: lamu.NewDynamicView("p_users.RoleDetailView"),
 			}},
-			{Key: "users.RoleUpdateRoute", Value: lamu.Route{
+			{Key: "p_users.RoleUpdateRoute", Value: lamu.Route{
 				Path:    RoleUrl + "{id}/edit/",
-				Handler: lamu.NewDynamicView("users.RoleUpdateView"),
+				Handler: lamu.NewDynamicView("p_users.RoleUpdateView"),
 			}},
-			{Key: "users.RoleDeleteRoute", Value: lamu.Route{
+			{Key: "p_users.RoleDeleteRoute", Value: lamu.Route{
 				Path:    RoleUrl + "{id}/delete/",
-				Handler: lamu.NewDynamicView("users.RoleDeleteView"),
+				Handler: lamu.NewDynamicView("p_users.RoleDeleteView"),
 			}},
-			{Key: "users.LoginRoute", Value: lamu.Route{
+			{Key: "p_users.LoginRoute", Value: lamu.Route{
 				Path:    AppUrl + "login/",
-				Handler: lamu.NewDynamicView("users.LoginView"),
+				Handler: lamu.NewDynamicView("p_users.LoginView"),
 			}},
-			{Key: "users.SignupRoute", Value: lamu.Route{
+			{Key: "p_users.SignupRoute", Value: lamu.Route{
 				Path:    AppUrl + "signup/",
-				Handler: lamu.NewDynamicView("users.SignupView"),
+				Handler: lamu.NewDynamicView("p_users.SignupView"),
 			}},
-			{Key: "users.LoginSuccessRoute", Value: lamu.Route{
+			{Key: "p_users.LoginSuccessRoute", Value: lamu.Route{
 				Path:    AppUrl + "success/",
-				Handler: lamu.NewDynamicView("users.LoginSuccessView"),
+				Handler: lamu.NewDynamicView("p_users.LoginSuccessView"),
 			}},
-			{Key: "users.UnauthenticatedRoute", Value: lamu.Route{
+			{Key: "p_users.UnauthenticatedRoute", Value: lamu.Route{
 				Path:    AppUrl + "unauthenticated/",
-				Handler: lamu.NewDynamicView("users.UnauthenticatedView"),
+				Handler: lamu.NewDynamicView("p_users.UnauthenticatedView"),
 			}},
-			{Key: "users.LogoutRoute", Value: lamu.Route{
+			{Key: "p_users.LogoutRoute", Value: lamu.Route{
 				Path:    AppUrl + "logout/",
-				Handler: lamu.NewDynamicView("users.LogoutView"),
+				Handler: lamu.NewDynamicView("p_users.LogoutView"),
 			}},
 		},
 	}

@@ -9,25 +9,25 @@ import (
 
 func pageEntriesRole() []registry.Pair[string, components.PageInterface] {
 	return []registry.Pair[string, components.PageInterface]{
-		{Key: "users.RoleDetailMenu", Value: &components.SidebarMenu{
+		{Key: "p_users.RoleDetailMenu", Value: &components.SidebarMenu{
 			Title: getters.Format("Role: %s", getters.Any(getters.Key[string]("role.Name"))),
 			Back: &components.SidebarMenuItem{
 				Title: getters.Static("Back to All Roles"),
-				Url:   lamu.RoutePath("users.RoleListRoute", nil),
+				Url:   lamu.RoutePath("p_users.RoleListRoute", nil),
 			},
 			Children: []components.PageInterface{
 				&components.SidebarMenuItem{
 					Title: getters.Static("Role Detail"),
-					Url:   lamu.RoutePath("users.RoleDetailRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("role.ID"))}),
+					Url:   lamu.RoutePath("p_users.RoleDetailRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("role.ID"))}),
 				},
 				&components.SidebarMenuItem{
 					Title: getters.Static("Edit Role"),
-					Url:   lamu.RoutePath("users.RoleUpdateRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("role.ID"))}),
+					Url:   lamu.RoutePath("p_users.RoleUpdateRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("role.ID"))}),
 				},
 			},
 		}},
-		{Key: "users.RoleFilter", Value: &components.FormComponent[Role]{
-			Attr: getters.FormBoostedGet(lamu.RoutePath("users.RoleListRoute", nil)),
+		{Key: "p_users.RoleFilter", Value: &components.FormComponent[Role]{
+			Attr: getters.FormBoostedGet(lamu.RoutePath("p_users.RoleListRoute", nil)),
 
 			ChildrenInput: []components.PageInterface{
 				&components.InputText{Label: "Name", Name: "Name", Getter: getters.Key[string]("$get.Name")},
@@ -39,9 +39,9 @@ func pageEntriesRole() []registry.Pair[string, components.PageInterface] {
 				}},
 			},
 		}},
-		{Key: "users.RoleTable", Value: &components.ShellScaffold{
+		{Key: "p_users.RoleTable", Value: &components.ShellScaffold{
 			Sidebar: []components.PageInterface{
-				lamu.DynamicPage{Name: "users.UserMenu"},
+				lamu.DynamicPage{Name: "p_users.UserMenu"},
 			},
 			Children: []components.PageInterface{
 				&components.DataTable[Role]{
@@ -49,17 +49,17 @@ func pageEntriesRole() []registry.Pair[string, components.PageInterface] {
 					Classes: "w-full",
 					Data:    getters.Key[components.ObjectList[Role]]("roles"),
 					Actions: []components.PageInterface{
-						&components.TableButtonFilter{Child: lamu.DynamicPage{Name: "users.RoleFilter"}},
+						&components.TableButtonFilter{Child: lamu.DynamicPage{Name: "p_users.RoleFilter"}},
 						&components.ButtonModalForm{
-							Name:        getters.Static("users.RoleCreateForm"),
-							Url:         lamu.RoutePath("users.RoleCreateRoute", nil),
-							FormPostURL: lamu.RoutePath("users.RoleCreateRoute", nil),
+							Name:        getters.Static("p_users.RoleCreateForm"),
+							Url:         lamu.RoutePath("p_users.RoleCreateRoute", nil),
+							FormPostURL: lamu.RoutePath("p_users.RoleCreateRoute", nil),
 							ModalUID:    "role-create-modal",
 							Icon:        "plus",
 							Classes:     "btn-square btn-outline btn-sm",
 						},
 					},
-					RowAttr: getters.RowAttrNavigate(lamu.RoutePath("users.RoleDetailRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("$row.ID"))})),
+					RowAttr: getters.RowAttrNavigate(lamu.RoutePath("p_users.RoleDetailRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("$row.ID"))})),
 					Columns: []components.TableColumn{
 						{Label: "Name", Name: "Name", Children: []components.PageInterface{
 							&components.FieldText{Getter: getters.Key[string]("$row.Name")},
@@ -68,9 +68,9 @@ func pageEntriesRole() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.RoleCreateForm", Value: &components.Modal{
+		{Key: "p_users.RoleCreateForm", Value: &components.Modal{
 			Page: components.Page{
-				Key: "users.RoleCreateModal",
+				Key: "p_users.RoleCreateModal",
 			},
 			UID: "role-create-modal",
 			Children: []components.PageInterface{
@@ -98,18 +98,18 @@ func pageEntriesRole() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.RoleUpdateForm", Value: &components.ShellScaffold{
+		{Key: "p_users.RoleUpdateForm", Value: &components.ShellScaffold{
 			Sidebar: []components.PageInterface{
-				lamu.DynamicPage{Name: "users.RoleDetailMenu"},
+				lamu.DynamicPage{Name: "p_users.RoleDetailMenu"},
 			},
 			Children: []components.PageInterface{
 				&components.FormListenBoostedPost{
-					Name:      getters.Static("users.RoleUpdateForm"),
-					ActionURL: lamu.RoutePath("users.RoleUpdateRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("role.ID"))}),
+					Name:      getters.Static("p_users.RoleUpdateForm"),
+					ActionURL: lamu.RoutePath("p_users.RoleUpdateRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("role.ID"))}),
 					Children: []components.PageInterface{
 						&components.FormComponent[Role]{
 							Getter: getters.Key[Role]("role"),
-							Attr:   getters.FormBubbling(getters.Static("users.RoleUpdateForm")),
+							Attr:   getters.FormBubbling(getters.Static("p_users.RoleUpdateForm")),
 
 							Title:    "Edit Role",
 							Subtitle: "Update role details",
@@ -132,9 +132,9 @@ func pageEntriesRole() []registry.Pair[string, components.PageInterface] {
 												&components.ButtonModalForm{
 													Label:       "Delete",
 													Icon:        "trash",
-													Name:        getters.Static("users.RoleDeleteForm"),
-													Url:         lamu.RoutePath("users.RoleDeleteRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("role.ID"))}),
-													FormPostURL: lamu.RoutePath("users.RoleDeleteRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("role.ID"))}),
+													Name:        getters.Static("p_users.RoleDeleteForm"),
+													Url:         lamu.RoutePath("p_users.RoleDeleteRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("role.ID"))}),
+													FormPostURL: lamu.RoutePath("p_users.RoleDeleteRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("role.ID"))}),
 													ModalUID:    "role-delete-modal",
 													Classes:     "btn-error",
 												},
@@ -148,9 +148,9 @@ func pageEntriesRole() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.RoleDetail", Value: &components.ShellScaffold{
+		{Key: "p_users.RoleDetail", Value: &components.ShellScaffold{
 			Sidebar: []components.PageInterface{
-				lamu.DynamicPage{Name: "users.RoleDetailMenu"},
+				lamu.DynamicPage{Name: "p_users.RoleDetailMenu"},
 			},
 			Children: []components.PageInterface{
 				&components.Detail[Role]{
@@ -165,7 +165,7 @@ func pageEntriesRole() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.RoleDeleteForm", Value: &components.Modal{
+		{Key: "p_users.RoleDeleteForm", Value: &components.Modal{
 			UID: "role-delete-modal",
 			Children: []components.PageInterface{
 				&components.DeleteConfirmation{

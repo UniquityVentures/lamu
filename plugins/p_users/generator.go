@@ -141,7 +141,7 @@ func CreateOverallSuperuser(db *gorm.DB) (*User, error) {
 func pluginGenerators() lamu.PluginFeatures[lamu.Generator] {
 	return lamu.PluginFeatures[lamu.Generator]{
 		Entries: []registry.Pair[string, lamu.Generator]{{
-			Key: "users.Generator",
+			Key: "p_users.Generator",
 			Value: lamu.Generator{
 				Create: func(db *gorm.DB) error {
 					_, err := CreateOverallSuperuser(db)

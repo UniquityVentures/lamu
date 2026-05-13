@@ -9,7 +9,7 @@ import (
 
 func pageEntriesSelection() []registry.Pair[string, components.PageInterface] {
 	return []registry.Pair[string, components.PageInterface]{
-		{Key: "users.UserSelectionTable", Value: &components.Modal{
+		{Key: "p_users.UserSelectionTable", Value: &components.Modal{
 			UID: "user-selection-modal",
 			Children: []components.PageInterface{
 				&components.DataTable[User]{
@@ -18,11 +18,11 @@ func pageEntriesSelection() []registry.Pair[string, components.PageInterface] {
 					Data:    getters.Key[components.ObjectList[User]]("users"),
 					RowAttr: getters.RowAttrSelect("UserID", getters.Key[uint]("$row.ID"), getters.Key[string]("$row.Name")),
 					Actions: []components.PageInterface{
-						&components.TableButtonFilter{Child: lamu.DynamicPage{Name: "users.UserSelectionFilter"}},
+						&components.TableButtonFilter{Child: lamu.DynamicPage{Name: "p_users.UserSelectionFilter"}},
 						&components.ButtonModalForm{
-							Name:        getters.Static("users.UserCreateForm"),
-							Url:         lamu.RoutePath("users.CreateRoute", nil),
-							FormPostURL: lamu.RoutePath("users.CreateRoute", nil),
+							Name:        getters.Static("p_users.UserCreateForm"),
+							Url:         lamu.RoutePath("p_users.CreateRoute", nil),
+							FormPostURL: lamu.RoutePath("p_users.CreateRoute", nil),
 							ModalUID:    "user-create-modal",
 							Icon:        "plus",
 							Classes:     "btn-square btn-outline btn-sm",
@@ -43,7 +43,7 @@ func pageEntriesSelection() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.RoleSelectionTable", Value: &components.Modal{
+		{Key: "p_users.RoleSelectionTable", Value: &components.Modal{
 			UID: "role-selection-modal",
 			Children: []components.PageInterface{
 				&components.DataTable[Role]{
@@ -52,11 +52,11 @@ func pageEntriesSelection() []registry.Pair[string, components.PageInterface] {
 					Data:    getters.Key[components.ObjectList[Role]]("roles"),
 					RowAttr: getters.RowAttrSelect("RoleID", getters.Key[uint]("$row.ID"), getters.Key[string]("$row.Name")),
 					Actions: []components.PageInterface{
-						&components.TableButtonFilter{Child: lamu.DynamicPage{Name: "users.RoleSelectionFilter"}},
+						&components.TableButtonFilter{Child: lamu.DynamicPage{Name: "p_users.RoleSelectionFilter"}},
 						&components.ButtonModalForm{
-							Name:        getters.Static("users.RoleCreateForm"),
-							Url:         lamu.RoutePath("users.RoleCreateRoute", nil),
-							FormPostURL: lamu.RoutePath("users.RoleCreateRoute", nil),
+							Name:        getters.Static("p_users.RoleCreateForm"),
+							Url:         lamu.RoutePath("p_users.RoleCreateRoute", nil),
+							FormPostURL: lamu.RoutePath("p_users.RoleCreateRoute", nil),
 							ModalUID:    "role-create-modal",
 							Icon:        "plus",
 							Classes:     "btn-square btn-outline btn-sm",

@@ -84,12 +84,9 @@ var Config = &PwaConfig{}
 
 func (c *PwaConfig) PostConfig() {
 	if c.AppName != "" {
-		err := components.RegistryShellHeadNodes.Register("base.title", html.TitleEl(gomponents.Text(c.AppName)))
-		if err != nil {
-			components.RegistryShellHeadNodes.Patch("base.title", func(_ gomponents.Node) gomponents.Node {
-				return html.TitleEl(gomponents.Text(c.AppName))
-			})
-		}
+		components.RegistryShellHeadNodes.Patch("core.Title", func(_ gomponents.Node) gomponents.Node {
+			return html.TitleEl(gomponents.Text(c.AppName))
+		})
 	}
 }
 

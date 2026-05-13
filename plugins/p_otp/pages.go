@@ -17,7 +17,7 @@ func pluginPages() lamu.PluginFeatures[components.PageInterface] {
 	return lamu.PluginFeatures[components.PageInterface]{
 		Entries: entries,
 		Patches: []registry.Pair[string, func(components.PageInterface) components.PageInterface]{
-			{Key: "users.LoginPage", Value: patchUsersLoginPageWithOtpForgotLink},
+			{Key: "p_users.LoginPage", Value: patchUsersLoginPageWithOtpForgotLink},
 		},
 	}
 }
@@ -25,7 +25,7 @@ func pluginPages() lamu.PluginFeatures[components.PageInterface] {
 func patchUsersLoginPageWithOtpForgotLink(page components.PageInterface) components.PageInterface {
 	if scaffold, ok := page.(*components.ShellAuthScaffold); ok {
 		components.InsertChildAfter(scaffold,
-			"users.AuthForm",
+			"p_users.AuthForm",
 			func(*components.FormComponent[p_users.User]) *components.ButtonLink {
 				return &components.ButtonLink{
 					Label: "Forgot password?",

@@ -8,11 +8,6 @@ import (
 	"github.com/UniquityVentures/lamu/registry"
 )
 
-const (
-	AppUrl  = "/users"
-	RoleUrl = "/users/roles"
-)
-
 // GetPlugin returns the registry contributions for this plugin for [lamu.BuildAllRegistries].
 func GetPlugin() registry.Pair[string, lamu.Plugin] {
 	u, err := url.Parse(AppUrl)

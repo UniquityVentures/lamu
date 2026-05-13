@@ -61,7 +61,8 @@ func (m RedirectLayer) Next(_ views.View, next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		views.HtmxRedirect(w, r, url, http.StatusMovedPermanently)
+		// See Other: targets are routing decisions, not immutable canonical URLs; avoid caching.
+		views.HtmxRedirect(w, r, url, http.StatusSeeOther)
 	})
 }
 

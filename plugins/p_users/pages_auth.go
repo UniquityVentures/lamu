@@ -9,20 +9,20 @@ import (
 
 func pageEntriesAuth() []registry.Pair[string, components.PageInterface] {
 	return []registry.Pair[string, components.PageInterface]{
-		{Key: "users.LoginPage", Value: &components.ShellAuthScaffold{
+		{Key: "p_users.LoginPage", Value: &components.ShellAuthScaffold{
 			Children: []components.PageInterface{
 				&components.ContainerColumn{Children: []components.PageInterface{
 					&components.FieldTitle{Getter: getters.Static("Login")},
 					&components.FormListenBoostedPost{
-						Name:      getters.Static("users.LoginPage"),
-						ActionURL: lamu.RoutePath("users.LoginRoute", nil),
+						Name:      getters.Static("p_users.LoginPage"),
+						ActionURL: lamu.RoutePath("p_users.LoginRoute", nil),
 						Children: []components.PageInterface{
 							&components.FormComponent[User]{
 								Page: components.Page{
-									Key: "users.AuthForm",
+									Key: "p_users.AuthForm",
 								},
 								Getter: getters.Key[User]("user"),
-								Attr:   getters.FormBubbling(getters.Static("users.LoginPage")),
+								Attr:   getters.FormBubbling(getters.Static("p_users.LoginPage")),
 								ChildrenInput: []components.PageInterface{
 									&components.ContainerError{
 										Error: getters.Key[error]("$error.Email"),
@@ -52,9 +52,9 @@ func pageEntriesAuth() []registry.Pair[string, components.PageInterface] {
 										Classes: "w-full",
 									},
 									&components.ButtonLink{
-										Page:    components.Page{Key: "users.AuthSignupLink"},
+										Page:    components.Page{Key: "p_users.AuthSignupLink"},
 										Label:   "Don't have an account? Sign up",
-										Link:    lamu.RoutePath("users.SignupRoute", nil),
+										Link:    lamu.RoutePath("p_users.SignupRoute", nil),
 										Classes: "w-full",
 									},
 								},
@@ -64,17 +64,17 @@ func pageEntriesAuth() []registry.Pair[string, components.PageInterface] {
 				}},
 			},
 		}},
-		{Key: "users.SignupPage", Value: &components.ShellAuthScaffold{
+		{Key: "p_users.SignupPage", Value: &components.ShellAuthScaffold{
 			Children: []components.PageInterface{
 				&components.ContainerColumn{Children: []components.PageInterface{
 					components.FieldTitle{Getter: getters.Static("Create an Account")},
 					&components.FormListenBoostedPost{
-						Name:      getters.Static("users.SignupPage"),
-						ActionURL: lamu.RoutePath("users.SignupRoute", nil),
+						Name:      getters.Static("p_users.SignupPage"),
+						ActionURL: lamu.RoutePath("p_users.SignupRoute", nil),
 						Children: []components.PageInterface{
 							&components.FormComponent[User]{
 								Getter: getters.Key[User]("user"),
-								Attr:   getters.FormBubbling(getters.Static("users.SignupPage")),
+								Attr:   getters.FormBubbling(getters.Static("p_users.SignupPage")),
 								ChildrenInput: []components.PageInterface{
 									&components.ContainerError{
 										Error: getters.Key[error]("$error.Name"),
@@ -115,7 +115,7 @@ func pageEntriesAuth() []registry.Pair[string, components.PageInterface] {
 								},
 								ChildrenAction: []components.PageInterface{
 									&components.ButtonSubmit{Label: "Sign Up", Classes: "w-full"},
-									&components.ButtonLink{Label: "Already have an account? Login", Link: lamu.RoutePath("users.LoginRoute", nil), Classes: "w-full"},
+									&components.ButtonLink{Label: "Already have an account? Login", Link: lamu.RoutePath("p_users.LoginRoute", nil), Classes: "w-full"},
 								},
 							},
 						},
@@ -123,18 +123,18 @@ func pageEntriesAuth() []registry.Pair[string, components.PageInterface] {
 				}},
 			},
 		}},
-		{Key: "users.UnauthenticatedPage", Value: &components.ShellAuthScaffold{
+		{Key: "p_users.UnauthenticatedPage", Value: &components.ShellAuthScaffold{
 			Children: []components.PageInterface{
 				&components.ContainerColumn{Classes: "w-80 items-center text-center", Children: []components.PageInterface{
 					&components.FieldTitle{Getter: getters.Static("Welcome")},
 					&components.FieldSubtitle{Getter: getters.Static("Please log in or create an account to continue.")},
 					&components.ContainerColumn{Classes: "w-full mt-4 gap-2", Children: []components.PageInterface{
-						&components.ButtonLink{Label: "Login", Classes: "btn btn-primary text-white w-full", Link: lamu.RoutePath("users.LoginRoute", nil)},
+						&components.ButtonLink{Label: "Login", Classes: "btn btn-primary text-white w-full", Link: lamu.RoutePath("p_users.LoginRoute", nil)},
 						&components.ButtonLink{
-							Page:    components.Page{Key: "users.AuthSignupLink"},
+							Page:    components.Page{Key: "p_users.AuthSignupLink"},
 							Label:   "Sign Up",
 							Classes: "btn btn-outline w-full",
-							Link:    lamu.RoutePath("users.SignupRoute", nil),
+							Link:    lamu.RoutePath("p_users.SignupRoute", nil),
 						},
 					}},
 				}},

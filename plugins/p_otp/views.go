@@ -33,7 +33,7 @@ func redirectToRoute(w http.ResponseWriter, r *http.Request, routeKey string, ar
 func phoneOtpRequestHandler(v *views.View) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if p_users.UserPresentInContext(r.Context()) {
-			_ = redirectToRoute(w, r, "users.ListRoute")
+			_ = redirectToRoute(w, r, "p_users.ListRoute")
 			return
 		}
 
@@ -86,7 +86,7 @@ func phoneOtpRequestHandler(v *views.View) http.Handler {
 func emailOtpRequestHandler(v *views.View) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if p_users.UserPresentInContext(r.Context()) {
-			_ = redirectToRoute(w, r, "users.ListRoute")
+			_ = redirectToRoute(w, r, "p_users.ListRoute")
 			return
 		}
 
@@ -140,7 +140,7 @@ func otpVerifyHandler(v *views.View) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		identifier := r.URL.Query().Get("identifier")
 		if identifier == "" {
-			_ = redirectToRoute(w, r, "users.LoginRoute")
+			_ = redirectToRoute(w, r, "p_users.LoginRoute")
 			return
 		}
 
@@ -215,7 +215,7 @@ func otpVerifyHandler(v *views.View) http.Handler {
 				return
 			}
 			user.Login(w, r)
-			_ = redirectToRoute(w, r, "users.LoginRoute")
+			_ = redirectToRoute(w, r, "p_users.LoginRoute")
 			return
 		}
 
@@ -243,7 +243,7 @@ func pluginViews() lamu.PluginFeatures[*views.View] {
 			{
 				Key: "otp.PhoneOtpRequestView",
 				Value: lamu.GetPageView("otp.PhoneOtpRequestForm").
-					WithLayer("users.optional_auth", p_users.OptionalAuthLayer{}).
+					WithLayer("p_users.optional_auth", p_users.OptionalAuthLayer{}).
 					WithLayer("otp.phone_get", views.MethodLayer{
 						Method:  http.MethodGet,
 						Handler: phoneOtpRequestHandler,
@@ -256,7 +256,7 @@ func pluginViews() lamu.PluginFeatures[*views.View] {
 			{
 				Key: "otp.EmailOtpRequestView",
 				Value: lamu.GetPageView("otp.EmailOtpRequestForm").
-					WithLayer("users.optional_auth", p_users.OptionalAuthLayer{}).
+					WithLayer("p_users.optional_auth", p_users.OptionalAuthLayer{}).
 					WithLayer("otp.email_get", views.MethodLayer{
 						Method:  http.MethodGet,
 						Handler: emailOtpRequestHandler,
@@ -269,7 +269,7 @@ func pluginViews() lamu.PluginFeatures[*views.View] {
 			{
 				Key: "otp.OtpVerifyView",
 				Value: lamu.GetPageView("otp.OtpVerifyForm").
-					WithLayer("users.optional_auth", p_users.OptionalAuthLayer{}).
+					WithLayer("p_users.optional_auth", p_users.OptionalAuthLayer{}).
 					WithLayer("otp.verify_get", views.MethodLayer{
 						Method:  http.MethodGet,
 						Handler: otpVerifyHandler,
@@ -282,8 +282,8 @@ func pluginViews() lamu.PluginFeatures[*views.View] {
 			{
 				Key: "otp.OTPPreferencesView",
 				Value: lamu.GetPageView("otp.OTPPreferencesForm").
-					WithLayer("users.auth", p_users.AuthenticationLayer{}).
-					WithLayer("users.role", p_users.RoleAuthorizationLayer{Roles: []string{"superuser"}}).
+					WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
+					WithLayer("p_users.role", p_users.RoleAuthorizationLayer{Roles: []string{"superuser"}}).
 					WithLayer("otp.preferences", views.LayerSingleton[OTPPreferences]{
 						SuccessURL: lamu.RoutePath("otp.OTPPreferencesRoute", nil),
 					}),

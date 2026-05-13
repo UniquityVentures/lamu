@@ -561,93 +561,93 @@ func pluginViews() lamu.PluginFeatures[*views.View] {
 	return lamu.PluginFeatures[*views.View]{
 		Entries: []registry.Pair[string, *views.View]{
 			{Key: "filesystem.ListView", Value: lamu.GetPageView("filesystem.VNodeTable").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.list", filesystemLayerListRoot()).
 				WithLayer("filesystem.list-enrich", vNodeListEnrichLayer{})},
 			{Key: "filesystem.BrowseView", Value: lamu.GetPageView("filesystem.VNodeTable").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.parent", loadVNodeByPathParamLayer{Param: "parent_id"}).
 				WithLayer("filesystem.list", filesystemLayerListBrowse()).
 				WithLayer("filesystem.list-enrich", vNodeListEnrichLayer{})},
 			{Key: "filesystem.DetailView", Value: lamu.GetPageView("filesystem.VNodeDetail").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.node", loadVNodeByPathParamLayer{Param: "id"})},
 			{Key: "filesystem.CreateView", Value: lamu.GetPageView("filesystem.VNodeCreateForm").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.create", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: createHandler,
 				})},
 			{Key: "filesystem.CreateChildView", Value: lamu.GetPageView("filesystem.VNodeCreateForm").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.parent", loadVNodeByPathParamLayer{Param: "parent_id"}).
 				WithLayer("filesystem.create", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: createHandler,
 				})},
 			{Key: "filesystem.UpdateView", Value: lamu.GetPageView("filesystem.VNodeUpdateForm").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.node", loadVNodeByPathParamLayer{Param: "id"}).
 				WithLayer("filesystem.update", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: updateHandler,
 				})},
 			{Key: "filesystem.DeleteView", Value: lamu.GetPageView("filesystem.VNodeDeleteForm").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.node", loadVNodeByPathParamLayer{Param: "id"}).
 				WithLayer("filesystem.delete", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: deleteHandler,
 				})},
 			{Key: "filesystem.MoveView", Value: lamu.GetPageView("filesystem.VNodeMoveForm").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.node", loadVNodeByPathParamLayer{Param: "id"}).
 				WithLayer("filesystem.move", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: moveHandler,
 				})},
 			{Key: "filesystem.MultiUploadView", Value: lamu.GetPageView("filesystem.VNodeMultiUploadForm").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.multi_upload", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: multiUploadHandler,
 				})},
 			{Key: "filesystem.MultiUploadChildView", Value: lamu.GetPageView("filesystem.VNodeMultiUploadForm").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.parent", loadVNodeByPathParamLayer{Param: "parent_id"}).
 				WithLayer("filesystem.multi_upload", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: multiUploadHandler,
 				})},
 			{Key: "filesystem.SelectView", Value: lamu.GetPageView("filesystem.ParentSelectionTable").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.list", filesystemLayerListSelectRoot()).
 				WithLayer("filesystem.list-enrich", vNodeListEnrichLayer{})},
 			{Key: "filesystem.SelectChildView", Value: lamu.GetPageView("filesystem.ParentSelectionTable").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.parent", loadVNodeByPathParamLayer{Param: "parent_id"}).
 				WithLayer("filesystem.list", filesystemLayerListSelectChild()).
 				WithLayer("filesystem.list-enrich", vNodeListEnrichLayer{})},
 			{Key: "filesystem.MultiSelectView", Value: lamu.GetPageView("filesystem.MultiSelectionTable").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.list", filesystemLayerListMultiRoot()).
 				WithLayer("filesystem.list-enrich", vNodeListEnrichLayer{})},
 			{Key: "filesystem.MultiSelectChildView", Value: lamu.GetPageView("filesystem.MultiSelectionTable").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.parent", loadVNodeByPathParamLayer{Param: "parent_id"}).
 				WithLayer("filesystem.list", filesystemLayerListMultiChild()).
 				WithLayer("filesystem.list-enrich", vNodeListEnrichLayer{})},
 			{Key: "filesystem.MoveSelectView", Value: lamu.GetPageView("filesystem.DestinationSelectionTable").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.list", filesystemLayerListMoveRoot()).
 				WithLayer("filesystem.list-enrich", vNodeListEnrichLayer{})},
 			{Key: "filesystem.MoveSelectChildView", Value: lamu.GetPageView("filesystem.DestinationSelectionTable").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.parent", loadVNodeByPathParamLayer{Param: "parent_id"}).
 				WithLayer("filesystem.list", filesystemLayerListMoveChild()).
 				WithLayer("filesystem.list-enrich", vNodeListEnrichLayer{})},
 			{Key: "filesystem.DownloadView", Value: lamu.GetPageView("filesystem.VNodeDetail").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("filesystem.node", loadVNodeByPathParamLayer{Param: "id"}).
 				WithLayer("filesystem.download", views.MethodLayer{
 					Method:  http.MethodGet,

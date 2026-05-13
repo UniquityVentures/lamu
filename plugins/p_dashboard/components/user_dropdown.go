@@ -49,7 +49,7 @@ func (e UserDropdown) Build(ctx context.Context) gomponents.Node {
 		),
 	}
 	if userOK {
-		selfDetailHref, err := getters.IfOr(lamu.RoutePath("users.SelfDetailRoute", nil), ctx, "")
+		selfDetailHref, err := getters.IfOr(lamu.RoutePath("p_users.SelfDetailRoute", nil), ctx, "")
 		if err != nil {
 			slog.Error("user dropdown: resolve self detail route", "error", err)
 		}
@@ -63,7 +63,7 @@ func (e UserDropdown) Build(ctx context.Context) gomponents.Node {
 			components.Render(components.ButtonPost{
 				Label:   "Logout",
 				Icon:    "arrow-right-start-on-rectangle",
-				URL:     lamu.RoutePath("users.LogoutRoute", nil),
+				URL:     lamu.RoutePath("p_users.LogoutRoute", nil),
 				Classes: "btn btn-error justify-start w-full",
 			}, ctx),
 		))

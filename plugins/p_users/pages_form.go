@@ -34,13 +34,13 @@ func userFormFields() components.ContainerColumn {
 				},
 			},
 			&components.ContainerError{
-				Page:  components.Page{Key: "users.RoleField"},
+				Page:  components.Page{Key: "p_users.RoleField"},
 				Error: getters.Key[error]("$error.RoleID"),
 				Children: []components.PageInterface{
 					&components.InputForeignKey[Role]{
 						Label:       "Role",
 						Name:        "RoleID",
-						Url:         lamu.RoutePath("users.RoleSelectRoute", nil),
+						Url:         lamu.RoutePath("p_users.RoleSelectRoute", nil),
 						Display:     getters.Key[string]("$in.Name"),
 						Placeholder: "Select a role...",
 						Required:    true,
@@ -54,16 +54,16 @@ func userFormFields() components.ContainerColumn {
 
 func selfFormFields() components.ContainerColumn {
 	fields := userFormFields()
-	components.RemoveChild[*components.ContainerError](&fields, "users.RoleField")
+	components.RemoveChild[*components.ContainerError](&fields, "p_users.RoleField")
 	return fields
 }
 
 func pageEntriesForms() []registry.Pair[string, components.PageInterface] {
 	return []registry.Pair[string, components.PageInterface]{
-		{Key: "users.UserFormFields", Value: userFormFields()},
-		{Key: "users.UserCreateForm", Value: &components.Modal{
+		{Key: "p_users.UserFormFields", Value: userFormFields()},
+		{Key: "p_users.UserCreateForm", Value: &components.Modal{
 			Page: components.Page{
-				Key: "users.UserCreateModal",
+				Key: "p_users.UserCreateModal",
 			},
 			UID: "user-create-modal",
 			Children: []components.PageInterface{
@@ -87,20 +87,20 @@ func pageEntriesForms() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.UserUpdateForm", Value: &components.ShellScaffold{
+		{Key: "p_users.UserUpdateForm", Value: &components.ShellScaffold{
 			Sidebar: []components.PageInterface{
-				lamu.DynamicPage{Name: "users.UserDetailMenu"},
+				lamu.DynamicPage{Name: "p_users.UserDetailMenu"},
 			},
 			Children: []components.PageInterface{
 				&components.FormListenBoostedPost{
-					Name: getters.Static("users.UserUpdateForm"),
-					ActionURL: lamu.RoutePath("users.UpdateRoute", map[string]getters.Getter[any]{
+					Name: getters.Static("p_users.UserUpdateForm"),
+					ActionURL: lamu.RoutePath("p_users.UpdateRoute", map[string]getters.Getter[any]{
 						"id": getters.Any(getters.Key[uint]("user.ID")),
 					}),
 					Children: []components.PageInterface{
 						&components.FormComponent[User]{
 							Getter: getters.Key[User]("user"),
-							Attr:   getters.FormBubbling(getters.Static("users.UserUpdateForm")),
+							Attr:   getters.FormBubbling(getters.Static("p_users.UserUpdateForm")),
 
 							Title:    "Edit User",
 							Subtitle: "Update user details",
@@ -119,9 +119,9 @@ func pageEntriesForms() []registry.Pair[string, components.PageInterface] {
 												&components.ButtonModalForm{
 													Label:       "Delete",
 													Icon:        "trash",
-													Name:        getters.Static("users.UserDeleteForm"),
-													Url:         lamu.RoutePath("users.DeleteRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("user.ID"))}),
-													FormPostURL: lamu.RoutePath("users.DeleteRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("user.ID"))}),
+													Name:        getters.Static("p_users.UserDeleteForm"),
+													Url:         lamu.RoutePath("p_users.DeleteRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("user.ID"))}),
+													FormPostURL: lamu.RoutePath("p_users.DeleteRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("user.ID"))}),
 													ModalUID:    "user-delete-modal",
 													Classes:     "btn-error",
 												},
@@ -135,18 +135,18 @@ func pageEntriesForms() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.SelfUpdateForm", Value: &components.ShellScaffold{
+		{Key: "p_users.SelfUpdateForm", Value: &components.ShellScaffold{
 			Sidebar: []components.PageInterface{
-				lamu.DynamicPage{Name: "users.UserSelfMenu"},
+				lamu.DynamicPage{Name: "p_users.UserSelfMenu"},
 			},
 			Children: []components.PageInterface{
 				&components.FormListenBoostedPost{
-					Name:      getters.Static("users.SelfUpdateForm"),
-					ActionURL: lamu.RoutePath("users.SelfUpdateRoute", nil),
+					Name:      getters.Static("p_users.SelfUpdateForm"),
+					ActionURL: lamu.RoutePath("p_users.SelfUpdateRoute", nil),
 					Children: []components.PageInterface{
 						&components.FormComponent[User]{
 							Getter: getters.Key[User]("user"),
-							Attr:   getters.FormBubbling(getters.Static("users.SelfUpdateForm")),
+							Attr:   getters.FormBubbling(getters.Static("p_users.SelfUpdateForm")),
 
 							Title:    "Edit My Profile",
 							Subtitle: "Update your account details",
@@ -162,18 +162,18 @@ func pageEntriesForms() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.SelfChangePasswordForm", Value: &components.ShellScaffold{
+		{Key: "p_users.SelfChangePasswordForm", Value: &components.ShellScaffold{
 			Sidebar: []components.PageInterface{
-				lamu.DynamicPage{Name: "users.UserSelfMenu"},
+				lamu.DynamicPage{Name: "p_users.UserSelfMenu"},
 			},
 			Children: []components.PageInterface{
 				&components.FormListenBoostedPost{
-					Name:      getters.Static("users.SelfChangePasswordForm"),
-					ActionURL: lamu.RoutePath("users.SelfChangePasswordRoute", nil),
+					Name:      getters.Static("p_users.SelfChangePasswordForm"),
+					ActionURL: lamu.RoutePath("p_users.SelfChangePasswordRoute", nil),
 					Children: []components.PageInterface{
 						&components.FormComponent[User]{
 							Getter: getters.Key[User]("user"),
-							Attr:   getters.FormBubbling(getters.Static("users.SelfChangePasswordForm")),
+							Attr:   getters.FormBubbling(getters.Static("p_users.SelfChangePasswordForm")),
 
 							Title:    "Change Password",
 							Subtitle: "Update your password",
@@ -199,18 +199,18 @@ func pageEntriesForms() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.ChangePasswordForm", Value: &components.ShellScaffold{
+		{Key: "p_users.ChangePasswordForm", Value: &components.ShellScaffold{
 			Sidebar: []components.PageInterface{
-				lamu.DynamicPage{Name: "users.UserDetailMenu"},
+				lamu.DynamicPage{Name: "p_users.UserDetailMenu"},
 			},
 			Children: []components.PageInterface{
 				&components.FormListenBoostedPost{
-					Name:      getters.Static("users.ChangePasswordForm"),
-					ActionURL: lamu.RoutePath("users.ChangePasswordRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("user.ID"))}),
+					Name:      getters.Static("p_users.ChangePasswordForm"),
+					ActionURL: lamu.RoutePath("p_users.ChangePasswordRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("user.ID"))}),
 					Children: []components.PageInterface{
 						&components.FormComponent[User]{
 							Getter: getters.Key[User]("user"),
-							Attr:   getters.FormBubbling(getters.Static("users.ChangePasswordForm")),
+							Attr:   getters.FormBubbling(getters.Static("p_users.ChangePasswordForm")),
 
 							Title:    "Change Password",
 							Subtitle: "Update user password",

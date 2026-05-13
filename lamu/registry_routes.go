@@ -13,6 +13,13 @@ import (
 
 var RegistryRoute *registry.ImmutableRegistry[Route] = &registry.ImmutableRegistry[Route]{}
 
+// Route carries a ServeMux-compatible pattern ([net/http], Go 1.22+) and handler.
+// Wildcards like {id} must each occupy a full path segment: use "/users/u/{id}/delete/"
+// not "/users{id}/delete/". When building paths as base+suffix, the base should end
+// with "/" before appending a segment that starts with "{" (e.g. const AppUrl = "/users/"
+// so AppUrl+"{id}/" is valid). If sibling paths include fixed literals and {id} segments
+// under the same prefix (e.g. /users/roles/… vs /users/{id}/…), add a disambiguating literal
+// segment (e.g. /users/u/{id}/…).
 type Route struct {
 	Path    string
 	Handler http.Handler

@@ -24,7 +24,7 @@ func redirectToRoute(w http.ResponseWriter, r *http.Request, routeKey string, ar
 		http.NotFound(w, r)
 		return false
 	}
-	views.HtmxRedirect(w, r, url, http.StatusMovedPermanently)
+	views.HtmxRedirect(w, r, url, http.StatusSeeOther)
 	return true
 }
 
@@ -61,14 +61,12 @@ func loginHandler(v *views.View) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		values, fieldErrors, err := v.ParseForm(w, r)
 		if err != nil {
-			fmt.Println(1)
 			ctx := views.ContextWithErrorsAndValues(r.Context(), values, map[string]error{"_form": err})
 			v.RenderPage(w, r.WithContext(ctx))
 			return
 		}
 		if len(fieldErrors) != 0 {
 			ctx := views.ContextWithErrorsAndValues(r.Context(), values, fieldErrors)
-			fmt.Println(2)
 			v.RenderPage(w, r.WithContext(ctx))
 			return
 		}
@@ -84,13 +82,12 @@ func loginHandler(v *views.View) http.Handler {
 		if err != nil {
 			fieldErrors["Password"] = fmt.Errorf("invalid email or password")
 			ctx := views.ContextWithErrorsAndValues(r.Context(), values, fieldErrors)
-			fmt.Println(3)
 			v.RenderPage(w, r.WithContext(ctx))
 			return
 		}
 
 		user.Login(w, r)
-		_ = redirectToRoute(w, r, "users.LoginSuccessRoute")
+		_ = redirectToRoute(w, r, "p_users.LoginSuccessRoute")
 	})
 }
 
@@ -163,7 +160,7 @@ func signupHandler(v *views.View) http.Handler {
 		}
 
 		user.Login(w, r)
-		_ = redirectToRoute(w, r, "users.LoginSuccessRoute")
+		_ = redirectToRoute(w, r, "p_users.LoginSuccessRoute")
 	})
 }
 
@@ -175,7 +172,7 @@ func logoutHandler(_ *views.View) http.Handler {
 			Path:    "/",
 			Expires: time.Unix(0, 0),
 		})
-		_ = redirectToRoute(w, r, "users.LoginRoute")
+		_ = redirectToRoute(w, r, "p_users.LoginRoute")
 	})
 }
 
@@ -228,7 +225,7 @@ func changePasswordHandler(v *views.View) http.Handler {
 			return
 		}
 
-		_ = redirectToRoute(w, r, "users.DetailRoute", map[string]getters.Getter[any]{
+		_ = redirectToRoute(w, r, "p_users.DetailRoute", map[string]getters.Getter[any]{
 			"id": getters.Any(getters.Static(targetID)),
 		})
 	})
@@ -267,165 +264,166 @@ func selfChangePasswordHandler(v *views.View) http.Handler {
 			return
 		}
 
-		_ = redirectToRoute(w, r, "users.SelfDetailRoute")
+		_ = redirectToRoute(w, r, "p_users.SelfDetailRoute")
 	})
 }
 
 func pluginViews() lamu.PluginFeatures[*views.View] {
 	return lamu.PluginFeatures[*views.View]{
 		Entries: []registry.Pair[string, *views.View]{
-			{Key: "users.ListView", Value: lamu.GetPageView("users.UserTable").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.list", views.LayerList[User]{
+			{Key: "p_users.ListView", Value: lamu.GetPageView("p_users.UserTable").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.list", views.LayerList[User]{
 					Key: getters.Static("users"),
 				})},
-			{Key: "users.DetailView", Value: lamu.GetPageView("users.UserDetail").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.detail", views.LayerDetail[User]{
+			{Key: "p_users.DetailView", Value: lamu.GetPageView("p_users.UserDetail").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.detail", views.LayerDetail[User]{
 					Key:          getters.Static("user"),
 					PathParamKey: getters.Static("id"),
 				})},
-			{Key: "users.CreateView", Value: lamu.GetPageView("users.UserCreateForm").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.create", views.LayerCreate[User]{
-					SuccessURL: lamu.RoutePath("users.DetailRoute", map[string]getters.Getter[any]{
+			{Key: "p_users.CreateView", Value: lamu.GetPageView("p_users.UserCreateForm").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.create", views.LayerCreate[User]{
+					SuccessURL: lamu.RoutePath("p_users.DetailRoute", map[string]getters.Getter[any]{
 						"id": getters.Any(getters.Key[uint]("$id")),
 					}),
 				})},
-			{Key: "users.UpdateView", Value: lamu.GetPageView("users.UserUpdateForm").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.detail", views.LayerDetail[User]{
+			{Key: "p_users.UpdateView", Value: lamu.GetPageView("p_users.UserUpdateForm").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.detail", views.LayerDetail[User]{
 					Key:          getters.Static("user"),
 					PathParamKey: getters.Static("id"),
 				}).
-				WithLayer("users.update", views.LayerUpdate[User]{
+				WithLayer("p_users.update", views.LayerUpdate[User]{
 					Key: getters.Static("user"),
-					SuccessURL: lamu.RoutePath("users.DetailRoute", map[string]getters.Getter[any]{
+					SuccessURL: lamu.RoutePath("p_users.DetailRoute", map[string]getters.Getter[any]{
 						"id": getters.Any(getters.Key[uint]("user.ID")),
 					}),
 				})},
-			{Key: "users.SelfDetailView", Value: lamu.GetPageView("users.SelfDetail").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.self_detail", authenticatedUserDetailLayer{})},
-			{Key: "users.SelfUpdateView", Value: lamu.GetPageView("users.SelfUpdateForm").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.self_detail", authenticatedUserDetailLayer{}).
-				WithLayer("users.self_update", views.LayerUpdate[User]{
+			{Key: "p_users.SelfDetailView", Value: lamu.GetPageView("p_users.SelfDetail").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.self_detail", authenticatedUserDetailLayer{})},
+			{Key: "p_users.SelfUpdateView", Value: lamu.GetPageView("p_users.SelfUpdateForm").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.self_detail", authenticatedUserDetailLayer{}).
+				WithLayer("p_users.self_update", views.LayerUpdate[User]{
 					Key:        getters.Static("user"),
-					SuccessURL: lamu.RoutePath("users.SelfDetailRoute", nil),
+					SuccessURL: lamu.RoutePath("p_users.SelfDetailRoute", nil),
 				})},
-			{Key: "users.SelfChangePasswordView", Value: lamu.GetPageView("users.SelfChangePasswordForm").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.self_detail", authenticatedUserDetailLayer{}).
-				WithLayer("users.self_change_password", views.MethodLayer{
+			{Key: "p_users.SelfChangePasswordView", Value: lamu.GetPageView("p_users.SelfChangePasswordForm").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.self_detail", authenticatedUserDetailLayer{}).
+				WithLayer("p_users.self_change_password", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: selfChangePasswordHandler,
 				})},
-			{Key: "users.DeleteView", Value: lamu.GetPageView("users.UserDeleteForm").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.detail", views.LayerDetail[User]{
+			{Key: "p_users.DeleteView", Value: lamu.GetPageView("p_users.UserDeleteForm").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.detail", views.LayerDetail[User]{
 					Key:          getters.Static("user"),
 					PathParamKey: getters.Static("id"),
 				}).
-				WithLayer("users.delete", views.LayerDelete[User]{
+				WithLayer("p_users.delete", views.LayerDelete[User]{
 					Key:        getters.Static("user"),
-					SuccessURL: lamu.RoutePath("users.ListRoute", nil),
+					SuccessURL: lamu.RoutePath("p_users.ListRoute", nil),
 				})},
-			{Key: "users.ChangePasswordView", Value: lamu.GetPageView("users.ChangePasswordForm").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.detail", views.LayerDetail[User]{
+			{Key: "p_users.ChangePasswordView", Value: lamu.GetPageView("p_users.ChangePasswordForm").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.detail", views.LayerDetail[User]{
 					Key:          getters.Static("user"),
 					PathParamKey: getters.Static("id"),
 				}).
-				WithLayer("users.change_password", views.MethodLayer{
+				WithLayer("p_users.change_password", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: changePasswordHandler,
 				})},
-			{Key: "users.SelectView", Value: lamu.GetPageView("users.UserSelectionTable").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.select", views.LayerList[User]{
+			{Key: "p_users.SelectView", Value: lamu.GetPageView("p_users.UserSelectionTable").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.select", views.LayerList[User]{
 					Key: getters.Static("users"),
 				})},
-			{Key: "users.RoleSelectView", Value: lamu.GetPageView("users.RoleSelectionTable").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.role_select", views.LayerList[Role]{
+			{Key: "p_users.RoleSelectView", Value: lamu.GetPageView("p_users.RoleSelectionTable").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.role_select", views.LayerList[Role]{
 					Key: getters.Static("roles"),
 				})},
-			{Key: "users.RoleListView", Value: lamu.GetPageView("users.RoleTable").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.role_list", views.LayerList[Role]{
+			{Key: "p_users.RoleListView", Value: lamu.GetPageView("p_users.RoleTable").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.role_list", views.LayerList[Role]{
 					Key: getters.Static("roles"),
 				})},
-			{Key: "users.RoleDetailView", Value: lamu.GetPageView("users.RoleDetail").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.role_detail", views.LayerDetail[Role]{
+			{Key: "p_users.RoleDetailView", Value: lamu.GetPageView("p_users.RoleDetail").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.role_detail", views.LayerDetail[Role]{
 					Key:          getters.Static("role"),
 					PathParamKey: getters.Static("id"),
 				})},
-			{Key: "users.RoleCreateView", Value: lamu.GetPageView("users.RoleCreateForm").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.role_create", views.LayerCreate[Role]{
-					SuccessURL: lamu.RoutePath("users.RoleDetailRoute", map[string]getters.Getter[any]{
+			{Key: "p_users.RoleCreateView", Value: lamu.GetPageView("p_users.RoleCreateForm").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.role_create", views.LayerCreate[Role]{
+					SuccessURL: lamu.RoutePath("p_users.RoleDetailRoute", map[string]getters.Getter[any]{
 						"id": getters.Any(getters.Key[uint]("$id")),
 					}),
 				})},
-			{Key: "users.RoleUpdateView", Value: lamu.GetPageView("users.RoleUpdateForm").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.role_detail", views.LayerDetail[Role]{
+			{Key: "p_users.RoleUpdateView", Value: lamu.GetPageView("p_users.RoleUpdateForm").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.role_detail", views.LayerDetail[Role]{
 					Key:          getters.Static("role"),
 					PathParamKey: getters.Static("id"),
 				}).
-				WithLayer("users.role_update", views.LayerUpdate[Role]{
+				WithLayer("p_users.role_update", views.LayerUpdate[Role]{
 					Key: getters.Static("role"),
-					SuccessURL: lamu.RoutePath("users.RoleDetailRoute", map[string]getters.Getter[any]{
+					SuccessURL: lamu.RoutePath("p_users.RoleDetailRoute", map[string]getters.Getter[any]{
 						"id": getters.Any(getters.Key[uint]("role.ID")),
 					}),
 				})},
-			{Key: "users.RoleDeleteView", Value: lamu.GetPageView("users.RoleDeleteForm").
-				WithLayer("users.auth", AuthenticationLayer{}).
-				WithLayer("users.role", RoleAuthorizationLayer{Roles: []string{""}}).
-				WithLayer("users.role_detail", views.LayerDetail[Role]{
+			{Key: "p_users.RoleDeleteView", Value: lamu.GetPageView("p_users.RoleDeleteForm").
+				WithLayer("p_users.auth", AuthenticationLayer{}).
+				WithLayer("p_users.role", RoleAuthorizationLayer{Roles: []string{""}}).
+				WithLayer("p_users.role_detail", views.LayerDetail[Role]{
 					Key:          getters.Static("role"),
 					PathParamKey: getters.Static("id"),
 				}).
-				WithLayer("users.role_delete", views.LayerDelete[Role]{
+				WithLayer("p_users.role_delete", views.LayerDelete[Role]{
 					Key:        getters.Static("role"),
-					SuccessURL: lamu.RoutePath("users.RoleListRoute", nil),
+					SuccessURL: lamu.RoutePath("p_users.RoleListRoute", nil),
 				})},
-			{Key: "users.LogoutView", Value: lamu.GetPageView("users.UnauthenticatedPage").
-				WithLayer("users.logout_post", views.MethodLayer{
+			{Key: "p_users.LogoutView", Value: lamu.GetPageView("p_users.UnauthenticatedPage").
+				WithLayer("p_users.logout_post", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: logoutHandler,
 				}).
-				WithLayer("users.logout_get", views.MethodLayer{
+				WithLayer("p_users.logout_get", views.MethodLayer{
 					Method:  http.MethodGet,
 					Handler: logoutHandler,
 				})},
-			{Key: "users.LoginView", Value: lamu.GetPageView("users.LoginPage").
-				WithLayer("users.login", views.MethodLayer{
+			{Key: "p_users.LoginView", Value: lamu.GetPageView("p_users.LoginPage").
+				WithLayer("p_users.login", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: loginHandler,
 				})},
-			{Key: "users.SignupView", Value: lamu.GetPageView("users.SignupPage").
-				WithLayer("users.signup", views.MethodLayer{
+			{Key: "p_users.SignupView", Value: lamu.GetPageView("p_users.SignupPage").
+				WithLayer("p_users.signup", views.MethodLayer{
 					Method:  http.MethodPost,
 					Handler: signupHandler,
 				})},
-			{Key: "base.HomeView", Value: lamu.RedirectView(lamu.RoutePath("users.LoginRoute", nil))},
-			{Key: "users.LoginSuccessView", Value: lamu.RedirectView(lamu.RoutePath("users.LoginRoute", nil))},
-			{Key: "users.UnauthenticatedView", Value: lamu.GetPageView("users.UnauthenticatedPage")},
+			// Post-login/signup landing; dashboards often patch this to a concrete home (e.g. apps list).
+			// Default avoids sending an authenticated session back to the login form.
+			{Key: "p_users.LoginSuccessView", Value: lamu.RedirectView(lamu.RoutePath("core.HomeRoute", nil))},
+			{Key: "p_users.UnauthenticatedView", Value: lamu.GetPageView("p_users.UnauthenticatedPage")},
 		},
 	}
 }

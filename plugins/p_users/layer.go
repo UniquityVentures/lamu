@@ -94,8 +94,8 @@ func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := resolveAuth(r)
 		if ctx == nil {
-			unauthenticatedRoute, _ := lamu.RegistryRoute.Get("users.UnauthenticatedRoute")
-			views.HtmxRedirect(w, r, unauthenticatedRoute.Path, http.StatusMovedPermanently)
+			unauthenticatedRoute, _ := lamu.RegistryRoute.Get("p_users.UnauthenticatedRoute")
+			views.HtmxRedirect(w, r, unauthenticatedRoute.Path, http.StatusSeeOther)
 			return
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))

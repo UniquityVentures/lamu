@@ -1,6 +1,8 @@
 package lamu
 
 import (
+	"context"
+	"fmt"
 	"log"
 
 	"github.com/UniquityVentures/lamu/registry"
@@ -44,29 +46,14 @@ func GetDbConn(config LamuConfig) (*gorm.DB, error) {
 }
 
 func InitDB(db *gorm.DB, config LamuConfig) error {
-	var dialector gorm.Dialector
-
-	switch config.DBType {
-	case DBTypeSqlite:
-		dialector = sqlite.New(*config.SqliteConfig)
-	case DBTypePostgres:
-		dialector = postgres.New(*config.PostgresConfig)
-	default:
-		log.Panicf("Unrecognized db type %s", config.DBType)
-	}
-
-	db, err := gorm.Open(dialector, &gorm.Config{
-		PrepareStmt: true,
-	})
+	sqlDB, err := db.DB()
 	if err != nil {
-		return err
+		return fmt.Errorf("gorm.DB().DB(): %w", err)
 	}
 
-	// Configure hard delete - skip soft delete and actually remove rows
-	db.Callback().Delete().Before("gorm:delete").Register("lamu:hard_delete", func(db *gorm.DB) {
-		// Set Unscoped to true to force hard delete instead of soft delete
-		db.Statement.Unscoped = true
-	})
+	if err := gooseUpPluginMigrations(context.Background(), sqlDB, config); err != nil {
+		return fmt.Errorf("goose migrations: %w", err)
+	}
 
 	for _, p := range *RegistryDBInit.AllStable() {
 		db = p.Value(db)

@@ -12,7 +12,7 @@ func FillRegistry[T any](features []func() PluginFeatures[T], targetRegistry *re
 		if feature == nil {
 			continue
 		}
-		finalFeatures.Merge(feature())
+		finalFeatures = finalFeatures.Merge(feature())
 		*targetRegistry = registry.NewImmutableRegistry(finalFeatures.Build())
 	}
 }
@@ -56,4 +56,7 @@ func BuildAllRegistries(allPlugins []registry.Pair[string, Plugin]) {
 	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) func() PluginFeatures[Route] {
 		return pair.Value.Routes
 	}), RegistryRoute)
+
+	// Installed-plugin metadata for tools like dashboard.AppsGrid (PluginType filter, RBAC tiles).
+	*RegistryPlugin = registry.NewImmutableRegistry(allPlugins)
 }

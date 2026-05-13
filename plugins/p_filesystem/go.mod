@@ -4,8 +4,8 @@ go 1.26.1
 
 require (
 	cloud.google.com/go/storage v1.62.1
-	github.com/UniquityVentures/lamu v0.4.4
-	github.com/UniquityVentures/lamu/plugins/p_users v0.4.4
+	github.com/UniquityVentures/lamu v0.4.5
+	github.com/UniquityVentures/lamu/plugins/p_users v0.4.5
 	google.golang.org/api v0.278.0
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.1

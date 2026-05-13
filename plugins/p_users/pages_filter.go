@@ -9,8 +9,8 @@ import (
 
 func pageEntriesFilters() []registry.Pair[string, components.PageInterface] {
 	return []registry.Pair[string, components.PageInterface]{
-		{Key: "users.UserFilter", Value: &components.FormComponent[User]{
-			Attr: getters.FormBoostedGet(lamu.RoutePath("users.ListRoute", nil)),
+		{Key: "p_users.UserFilter", Value: &components.FormComponent[User]{
+			Attr: getters.FormBoostedGet(lamu.RoutePath("p_users.ListRoute", nil)),
 
 			ChildrenInput: []components.PageInterface{
 				&components.InputText{Label: "Name", Name: "Name", Getter: getters.Key[string]("$get.Name")},
@@ -24,8 +24,8 @@ func pageEntriesFilters() []registry.Pair[string, components.PageInterface] {
 				}},
 			},
 		}},
-		{Key: "users.UserSelectionFilter", Value: &components.FormComponent[User]{
-			Attr: getters.FormBoostedGet(lamu.RoutePath("users.SelectRoute", nil)),
+		{Key: "p_users.UserSelectionFilter", Value: &components.FormComponent[User]{
+			Attr: getters.FormBoostedGet(lamu.RoutePath("p_users.SelectRoute", nil)),
 
 			ChildrenInput: []components.PageInterface{
 				&components.InputText{Label: "Name", Name: "Name", Getter: getters.Key[string]("$get.Name")},
@@ -38,8 +38,8 @@ func pageEntriesFilters() []registry.Pair[string, components.PageInterface] {
 				}},
 			},
 		}},
-		{Key: "users.RoleSelectionFilter", Value: &components.FormComponent[Role]{
-			Attr: getters.FormBoostedGet(lamu.RoutePath("users.SelectRoute", nil)),
+		{Key: "p_users.RoleSelectionFilter", Value: &components.FormComponent[Role]{
+			Attr: getters.FormBoostedGet(lamu.RoutePath("p_users.SelectRoute", nil)),
 
 			ChildrenInput: []components.PageInterface{
 				&components.InputText{Label: "Name", Name: "Name", Getter: getters.Key[string]("$get.Name")},

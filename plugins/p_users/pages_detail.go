@@ -9,14 +9,14 @@ import (
 
 func pageEntriesDetail() []registry.Pair[string, components.PageInterface] {
 	return []registry.Pair[string, components.PageInterface]{
-		{Key: "users.UserDetail", Value: &components.ShellScaffold{
+		{Key: "p_users.UserDetail", Value: &components.ShellScaffold{
 			Sidebar: []components.PageInterface{
-				lamu.DynamicPage{Name: "users.UserDetailMenu"},
+				lamu.DynamicPage{Name: "p_users.UserDetailMenu"},
 			},
 			Children: []components.PageInterface{
 				&components.Detail[User]{
 					Page: components.Page{
-						Key: "users.UserDetailContent",
+						Key: "p_users.UserDetailContent",
 					},
 					Getter: getters.Key[User]("user"),
 					Children: []components.PageInterface{
@@ -49,14 +49,14 @@ func pageEntriesDetail() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.SelfDetail", Value: &components.ShellScaffold{
+		{Key: "p_users.SelfDetail", Value: &components.ShellScaffold{
 			Sidebar: []components.PageInterface{
-				lamu.DynamicPage{Name: "users.UserSelfMenu"},
+				lamu.DynamicPage{Name: "p_users.UserSelfMenu"},
 			},
 			Children: []components.PageInterface{
 				&components.Detail[User]{
 					Page: components.Page{
-						Key: "users.SelfDetailContent",
+						Key: "p_users.SelfDetailContent",
 					},
 					Getter: getters.Key[User]("user"),
 					Children: []components.PageInterface{
@@ -90,7 +90,7 @@ func pageEntriesDetail() []registry.Pair[string, components.PageInterface] {
 				},
 			},
 		}},
-		{Key: "users.UserDeleteForm", Value: &components.Modal{
+		{Key: "p_users.UserDeleteForm", Value: &components.Modal{
 			UID: "user-delete-modal",
 			Children: []components.PageInterface{
 				&components.DeleteConfirmation{

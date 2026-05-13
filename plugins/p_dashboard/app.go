@@ -21,7 +21,7 @@ func GetPlugin() registry.Pair[string, lamu.Plugin] {
 
 	return registry.Pair[string, lamu.Plugin]{
 		Key: "p_dashboard", Value: lamu.Plugin{
-			Type:        lamu.PluginTypeApp,
+			Type:        lamu.PluginTypeAddon,
 			Icon:        "dashboard",
 			URL:         u,
 			VerboseName: "Dashboard",

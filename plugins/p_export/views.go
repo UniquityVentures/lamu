@@ -56,10 +56,10 @@ func pluginViews() lamu.PluginFeatures[*views.View] {
 	return lamu.PluginFeatures[*views.View]{
 		Entries: []registry.Pair[string, *views.View]{
 			{Key: "export.PageView", Value: lamu.GetPageView("export.Page").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("export.catalog", catalogLayer{})},
 			{Key: "export.DownloadView", Value: lamu.GetPageView("export.Page").
-				WithLayer("users.auth", p_users.AuthenticationLayer{}).
+				WithLayer("p_users.auth", p_users.AuthenticationLayer{}).
 				WithLayer("export.post_only", methodGateLayer{Method: http.MethodPost}).
 				WithLayer("export.download", views.MethodLayer{
 					Method:  http.MethodPost,
