@@ -1,0 +1,112 @@
+package lamu
+
+import (
+	"net/http"
+	"net/url"
+	"slices"
+
+	"github.com/UniquityVentures/lamu/components"
+	"github.com/UniquityVentures/lamu/registry"
+	"github.com/UniquityVentures/lamu/views"
+	"gorm.io/gorm"
+)
+
+type PluginType int
+
+const (
+	// For plugins that add new models and functionality, ideally independent of other plugins
+	PluginTypeApp = iota
+	// For plugins that add additional functionality to App
+	PluginTypeAddon
+	// For plugins that add a long running service
+	PluginTypeService
+)
+
+type PluginFeatures[T any] struct {
+	Entries []registry.Pair[string, T]
+	Patches []registry.Pair[string, func(T) T]
+}
+
+func (f *PluginFeatures[T]) Build() []registry.Pair[string, T] {
+	entries := slices.Clone(f.Entries)
+	for i := range len(entries) {
+		for _, v := range f.Patches {
+			if v.Key != entries[i].Key {
+				continue
+			}
+			entries[i].Value = v.Value(entries[i].Value)
+		}
+	}
+	return entries
+}
+
+func (f PluginFeatures[T]) Merge(others ...PluginFeatures[T]) PluginFeatures[T] {
+	result := f
+	for _, other := range others {
+		result.Entries = append(result.Entries, other.Entries...)
+		result.Patches = append(result.Patches, other.Patches...)
+	}
+	return result
+}
+
+type Plugin struct {
+	Type             PluginType
+	Icon             string
+	URL              *url.URL
+	VerboseName      string
+	Roles            []string
+	Migrations       PluginFeatures[UsefulFilesystem]
+	Views            PluginFeatures[*views.View]
+	Routes           PluginFeatures[Route]
+	Pages            PluginFeatures[components.PageInterface]
+	Models           PluginFeatures[any]
+	Layers           PluginFeatures[views.GlobalLayer]
+	Generators       PluginFeatures[Generator]
+	DBInitHooks      PluginFeatures[DBInitHook]
+	Configs          PluginFeatures[Config]
+	CommandFactories PluginFeatures[CommandFactory]
+}
+
+var RegistryPlugin *registry.ImmutableRegistry[Plugin] = &registry.ImmutableRegistry[Plugin]{}
+
+func CorePlugin(db *gorm.DB, config LamuConfig) registry.Pair[string, Plugin] {
+	layers := PluginFeatures[views.GlobalLayer]{}
+	layers.Entries = append(layers.Entries, registry.Pair[string, views.GlobalLayer]{Key: "core.AttachRequestLayer", Value: views.AttachRequestLayer{}})
+	layers.Entries = append(layers.Entries, registry.Pair[string, views.GlobalLayer]{Key: "core.DbLayer", Value: DBLayer{DB: db}})
+	if config.Debug {
+		layers.Entries = append(layers.Entries, registry.Pair[string, views.GlobalLayer]{Key: "core.LoggingLayer", Value: LoggingLayer{}})
+		layers.Entries = append(layers.Entries, registry.Pair[string, views.GlobalLayer]{Key: "core.CacheDisableLayer", Value: CacheDisableLayer{}})
+	}
+	layers.Entries = append(layers.Entries, registry.Pair[string, views.GlobalLayer]{Key: "core.HtmxBoostLayer", Value: HtmxBoostLayer{}})
+	layers.Entries = append(layers.Entries, registry.Pair[string, views.GlobalLayer]{Key: "core.EnvironmentLayer", Value: EnvironmentLayer{}})
+
+	return registry.Pair[string, Plugin]{
+		Key: "core", Value: Plugin{
+			Type: PluginTypeAddon,
+			URL: &url.URL{
+				Path: "/",
+			},
+			VerboseName: "Core",
+			Roles:       []string{"superuser", "admin"},
+			Views: PluginFeatures[*views.View]{
+				Entries: []registry.Pair[string, *views.View]{
+					{Key: "core.HomeView", Value: GetPageView("core.HomePage")},
+				},
+			},
+			Pages: PluginFeatures[components.PageInterface]{
+				Entries: []registry.Pair[string, components.PageInterface]{
+					{Key: "core.HomePage", Value: components.ShellBase{}},
+				},
+			},
+			Layers: layers,
+			Routes: PluginFeatures[Route]{
+				Entries: []registry.Pair[string, Route]{
+					{Key: "core.HomeRoute", Value: Route{Path: "/", Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						w.Write([]byte("Hello, World!"))
+					})}},
+				},
+			},
+		},
+	}
+}

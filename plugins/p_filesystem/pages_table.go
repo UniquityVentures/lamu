@@ -1,0 +1,38 @@
+package p_filesystem
+
+import (
+	"time"
+
+	"github.com/UniquityVentures/lamu/components"
+	"github.com/UniquityVentures/lamu/getters"
+	"github.com/UniquityVentures/lamu/lamu"
+	"github.com/UniquityVentures/lamu/registry"
+)
+
+func pageEntriesTables() []registry.Pair[string, components.PageInterface] {
+	return []registry.Pair[string, components.PageInterface]{
+		{Key: "filesystem.VNodeTable", Value: &components.ShellScaffold{
+			Sidebar: filesystemSidebar(),
+			Children: []components.PageInterface{
+				&components.DataTable[VNode]{
+					UID:      "filesystem-table",
+					Data:     getters.Key[components.ObjectList[VNode]]("vnodes"),
+					Title:    "Filesystem",
+					Subtitle: "Files and folders",
+					Actions: []components.PageInterface{
+						&components.TableButtonFilter{Child: lamu.DynamicPage{Name: "filesystem.VNodeFilter"}},
+						&components.TableButtonCreate{Link: listOrBrowseRoute("filesystem.CreateRoute", "filesystem.CreateChildRoute")},
+					},
+					RowAttr: getters.RowAttrNavigate(rowOpenRoute()),
+					Columns: []components.TableColumn{
+						{Label: "Name", Name: "Name", Children: []components.PageInterface{&components.FieldText{Getter: getters.Key[string]("$row.Name")}}},
+						{Label: "Type", Name: "Type", Children: []components.PageInterface{&components.FieldText{Getter: vnodeTypeForKey("$row")}}},
+						{Label: "Size", Name: "Size", Children: []components.PageInterface{&components.FieldText{Getter: vnodeSizeForKey("$row")}}},
+						{Label: "Items", Name: "Items", Children: []components.PageInterface{&components.FieldText{Getter: getters.Key[string]("$row.ListChildrenCount")}}},
+						{Label: "Modified", Name: "UpdatedAt", Children: []components.PageInterface{&components.FieldDatetime{Getter: getters.Key[time.Time]("$row.UpdatedAt")}}},
+					},
+				},
+			},
+		}},
+	}
+}

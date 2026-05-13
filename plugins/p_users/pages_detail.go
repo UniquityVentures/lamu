@@ -1,0 +1,104 @@
+package p_users
+
+import (
+	"github.com/UniquityVentures/lamu/components"
+	"github.com/UniquityVentures/lamu/getters"
+	"github.com/UniquityVentures/lamu/lamu"
+	"github.com/UniquityVentures/lamu/registry"
+)
+
+func pageEntriesDetail() []registry.Pair[string, components.PageInterface] {
+	return []registry.Pair[string, components.PageInterface]{
+		{Key: "users.UserDetail", Value: &components.ShellScaffold{
+			Sidebar: []components.PageInterface{
+				lamu.DynamicPage{Name: "users.UserDetailMenu"},
+			},
+			Children: []components.PageInterface{
+				&components.Detail[User]{
+					Page: components.Page{
+						Key: "users.UserDetailContent",
+					},
+					Getter: getters.Key[User]("user"),
+					Children: []components.PageInterface{
+						&components.ContainerColumn{
+							Children: []components.PageInterface{
+								&components.FieldTitle{Getter: getters.Key[string]("$in.Name")},
+								&components.FieldSubtitle{Getter: getters.Key[string]("$in.Email")},
+								&components.LabelInline{
+									Title:   "Phone",
+									Classes: "mt-2",
+									Children: []components.PageInterface{
+										&components.FieldText{Getter: getters.Key[string]("$in.Phone")},
+									},
+								},
+								&components.LabelInline{
+									Title: "Superuser",
+									Children: []components.PageInterface{
+										&components.FieldCheckbox{Getter: getters.Key[bool]("$in.IsSuperuser")},
+									},
+								},
+								&components.LabelInline{
+									Title: "Role",
+									Children: []components.PageInterface{
+										&components.FieldText{Getter: getters.ForeignKey[Role, uint, string](getters.Key[uint]("$in.RoleID"), "Name")},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}},
+		{Key: "users.SelfDetail", Value: &components.ShellScaffold{
+			Sidebar: []components.PageInterface{
+				lamu.DynamicPage{Name: "users.UserSelfMenu"},
+			},
+			Children: []components.PageInterface{
+				&components.Detail[User]{
+					Page: components.Page{
+						Key: "users.SelfDetailContent",
+					},
+					Getter: getters.Key[User]("user"),
+					Children: []components.PageInterface{
+						&components.ContainerColumn{
+							Children: []components.PageInterface{
+								&components.FieldTitle{Getter: getters.Key[string]("$in.Name")},
+								&components.FieldSubtitle{Getter: getters.Key[string]("$in.Email")},
+								&components.LabelInline{
+									Title:   "Phone",
+									Classes: "mt-2",
+									Children: []components.PageInterface{
+										&components.FieldText{Getter: getters.Key[string]("$in.Phone")},
+									},
+								},
+								&components.LabelInline{
+									Page:  components.Page{Roles: []string{"superuser"}},
+									Title: "Superuser",
+									Children: []components.PageInterface{
+										&components.FieldCheckbox{Getter: getters.Key[bool]("$in.IsSuperuser")},
+									},
+								},
+								&components.LabelInline{
+									Title: "Role",
+									Children: []components.PageInterface{
+										&components.FieldText{Getter: getters.ForeignKey[Role, uint, string](getters.Key[uint]("$in.RoleID"), "Name")},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}},
+		{Key: "users.UserDeleteForm", Value: &components.Modal{
+			UID: "user-delete-modal",
+			Children: []components.PageInterface{
+				&components.DeleteConfirmation{
+					Title:   "Confirm Deletion",
+					Message: "Are you sure you want to delete this user?",
+					Attr:    getters.FormBubbling(getters.Key[string]("$get.name")),
+				},
+			},
+		}},
+	}
+}
