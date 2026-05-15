@@ -78,6 +78,11 @@ type Plugin struct {
 	CommandFactories []func() PluginFeatures[CommandFactory]
 }
 
+// PluginStages wraps a single feature callback as a one-element slice for [Plugin] fields.
+func PluginStages[T any](stage func() PluginFeatures[T]) []func() PluginFeatures[T] {
+	return []func() PluginFeatures[T]{stage}
+}
+
 var RegistryPlugin *registry.ImmutableRegistry[Plugin] = &registry.ImmutableRegistry[Plugin]{}
 
 func CorePlugin(db *gorm.DB, config LamuConfig) registry.Pair[string, Plugin] {

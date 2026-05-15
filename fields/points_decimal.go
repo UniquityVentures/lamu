@@ -51,8 +51,7 @@ func (p *DecimalSix) UnmarshalText(text []byte) error {
 	if _, ok := r.SetString(s); !ok {
 		return fmt.Errorf("invalid points value %q", s)
 	}
-	p0 := p.NormalizeDecimals()
-	p = &p0
+	*p = DecimalSix{R: r}.NormalizeDecimals()
 	return nil
 }
 
