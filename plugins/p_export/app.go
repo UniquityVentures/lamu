@@ -25,9 +25,9 @@ func GetPlugin() registry.Pair[string, lamu.Plugin] {
 			Icon:        "arrow-down-tray",
 			URL:         u,
 			VerboseName: "Export",
-			Views:       pluginViews,
-			Pages:       pluginPages,
-			Routes:      pluginRoutes,
+			Views:       pluginStages(pluginViews),
+			Pages:       pluginStages(pluginPages),
+			Routes:      pluginStages(pluginRoutes),
 		},
 	}
 }

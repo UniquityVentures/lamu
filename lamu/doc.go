@@ -18,8 +18,11 @@
 // registration order: entries[i].Value = patchN(… patch2(patch1(entry)) …).
 //
 // [FillRegistry] merges plugin features incrementally and runs Build after each merge while
-// assembling one registry. Plugin contribution functions ([Plugin.Pages], etc.) must therefore be
-// safe to call repeatedly when merging; patches must tolerate Build being invoked more than once.
+// assembling one registry. Every function assigned to a [Plugin] feature field ([Plugin.Pages],
+// [Plugin.Views], [Plugin.Routes], [Plugin.DBInitHooks], etc.) must therefore be deterministic and
+// repeat-safe: calling it more than once must describe the same logical contributions and must not
+// append to package-level state, mutate previously returned entries, or otherwise depend on call
+// count.
 //
 // Patch functions MUST be pure and idempotent:
 //
@@ -39,7 +42,14 @@
 // registry entry; assigning fields on that copy does not corrupt other registry keys, but patches
 // should still return the updated struct explicitly for clarity.
 //
-// Feature callbacks themselves ([Plugin.Pages]’s closure, etc.) should avoid accumulating global
-// state across invocations; each call should describe the same logical contributions.
+// Feature callbacks themselves ([Plugin.Pages]’s closure, etc.) should construct or return a stable
+// description of the plugin’s entries and patches. If they use package-level slices for legacy
+// registration-style code, those slices must be fully populated before registry assembly and the
+// callback must only read them.
+//
+// Patches that add child components to pages or layers to views are a common source of accidental
+// non-idempotency. Give inserted components stable keys, check whether the key already exists before
+// inserting, and return a fresh shallow copy of pointer-backed values instead of appending directly
+// to the original value.
 
 package lamu

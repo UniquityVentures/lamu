@@ -58,21 +58,24 @@ func (f PluginFeatures[T]) Merge(others ...PluginFeatures[T]) PluginFeatures[T] 
 }
 
 type Plugin struct {
-	Type             PluginType
-	Icon             string
-	URL              *url.URL
-	VerboseName      string
-	Roles            []string
-	Migrations       func() PluginFeatures[UsefulFilesystem]
-	Views            func() PluginFeatures[*views.View]
-	Routes           func() PluginFeatures[Route]
-	Pages            func() PluginFeatures[components.PageInterface]
-	Models           func() PluginFeatures[any]
-	Layers           func() PluginFeatures[views.GlobalLayer]
-	Generators       func() PluginFeatures[Generator]
-	DBInitHooks      func() PluginFeatures[DBInitHook]
-	Configs          func() PluginFeatures[Config]
-	CommandFactories func() PluginFeatures[CommandFactory]
+	Type        PluginType
+	Icon        string
+	URL         *url.URL
+	VerboseName string
+	Roles       []string
+	// Feature callbacks are invoked during registry assembly and may be called
+	// more than once. They must be deterministic and repeat-safe; see package
+	// documentation for patch purity and idempotency requirements.
+	Migrations       []func() PluginFeatures[UsefulFilesystem]
+	Views            []func() PluginFeatures[*views.View]
+	Routes           []func() PluginFeatures[Route]
+	Pages            []func() PluginFeatures[components.PageInterface]
+	Models           []func() PluginFeatures[any]
+	Layers           []func() PluginFeatures[views.GlobalLayer]
+	Generators       []func() PluginFeatures[Generator]
+	DBInitHooks      []func() PluginFeatures[DBInitHook]
+	Configs          []func() PluginFeatures[Config]
+	CommandFactories []func() PluginFeatures[CommandFactory]
 }
 
 var RegistryPlugin *registry.ImmutableRegistry[Plugin] = &registry.ImmutableRegistry[Plugin]{}
@@ -96,30 +99,40 @@ func CorePlugin(db *gorm.DB, config LamuConfig) registry.Pair[string, Plugin] {
 			},
 			VerboseName: "Core",
 			Roles:       []string{"superuser", "admin"},
-			Views: func() PluginFeatures[*views.View] {
-				return PluginFeatures[*views.View]{
-					Entries: []registry.Pair[string, *views.View]{
-						{Key: "core.HomeView", Value: GetPageView("core.HomePage")},
-					},
-				}
+			Views: []func() PluginFeatures[*views.View]{
+				func() PluginFeatures[*views.View] {
+					return PluginFeatures[*views.View]{
+						Entries: []registry.Pair[string, *views.View]{
+							{Key: "core.HomeView", Value: GetPageView("core.HomePage")},
+						},
+					}
+				},
 			},
-			Pages: func() PluginFeatures[components.PageInterface] {
-				return PluginFeatures[components.PageInterface]{
-					Entries: []registry.Pair[string, components.PageInterface]{
-						{Key: "core.HomePage", Value: components.ShellBase{}},
-					},
-				}
+			Pages: []func() PluginFeatures[components.PageInterface]{
+				func() PluginFeatures[components.PageInterface] {
+					return PluginFeatures[components.PageInterface]{
+						Entries: []registry.Pair[string, components.PageInterface]{
+							{Key: "core.HomePage", Value: components.ShellBase{}},
+						},
+					}
+				},
 			},
-			Layers: func() PluginFeatures[views.GlobalLayer] { return layers },
-			Routes: func() PluginFeatures[Route] {
-				return PluginFeatures[Route]{
-					Entries: []registry.Pair[string, Route]{
-						{Key: "core.HomeRoute", Value: Route{Path: "/", Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-							w.WriteHeader(http.StatusOK)
-							w.Write([]byte("Hello, World!"))
-						})}},
-					},
-				}
+			Layers: []func() PluginFeatures[views.GlobalLayer]{
+				func() PluginFeatures[views.GlobalLayer] {
+					return layers
+				},
+			},
+			Routes: []func() PluginFeatures[Route]{
+				func() PluginFeatures[Route] {
+					return PluginFeatures[Route]{
+						Entries: []registry.Pair[string, Route]{
+							{Key: "core.HomeRoute", Value: Route{Path: "/", Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+								w.WriteHeader(http.StatusOK)
+								w.Write([]byte("Hello, World!"))
+							})}},
+						},
+					}
+				},
 			},
 		},
 	}

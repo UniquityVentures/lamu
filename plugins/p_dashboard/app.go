@@ -25,9 +25,9 @@ func GetPlugin() registry.Pair[string, lamu.Plugin] {
 			Icon:        "dashboard",
 			URL:         u,
 			VerboseName: "Dashboard",
-			Views:       pluginViews,
-			Pages:       pluginPages,
-			Routes:      pluginRoutes,
+			Views:       pluginStages(pluginViews),
+			Pages:       pluginStages(pluginPages),
+			Routes:      pluginStages(pluginRoutes),
 		},
 	}
 }

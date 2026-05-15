@@ -73,3 +73,5 @@ require (
 	gorm.io/gorm v1.31.1 // indirect
 	maragu.dev/gomponents v1.3.0 // indirect
 )
+
+replace github.com/UniquityVentures/lamu => ../..
