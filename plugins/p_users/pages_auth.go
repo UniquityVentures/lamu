@@ -49,7 +49,7 @@ func pageEntriesAuth() []registry.Pair[string, components.PageInterface] {
 								ChildrenAction: []components.PageInterface{
 									&components.ButtonSubmit{
 										Label:   "Login",
-										Classes: "w-full",
+										Classes: "w-full mb-4",
 									},
 									&components.ButtonLink{
 										Page:    components.Page{Key: "p_users.AuthSignupLink"},

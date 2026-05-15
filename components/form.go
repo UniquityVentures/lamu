@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/UniquityVentures/lamu/getters"
@@ -38,15 +37,13 @@ func (e FormComponent[T]) Build(ctx context.Context) gomponents.Node {
 			slog.Error("FormComponent getter failed", "error", err, "key", e.Key)
 			return ContainerError{Error: getters.Static(err)}.Build(ctx)
 		}
-		if v := reflect.ValueOf(value); v.IsValid() && !v.IsZero() {
-			objMap := getters.MapFromStruct(value)
-			if currentValues, ok := ctx.Value(getters.ContextKeyIn).(map[string]any); ok && len(currentValues) > 0 {
-				for key, value := range currentValues {
-					objMap[key] = value
-				}
+		objMap := getters.MapFromStruct(value)
+		if currentValues, ok := ctx.Value(getters.ContextKeyIn).(map[string]any); ok && len(currentValues) > 0 {
+			for key, value := range currentValues {
+				objMap[key] = value
 			}
-			childCtx = context.WithValue(ctx, getters.ContextKeyIn, objMap)
 		}
+		childCtx = context.WithValue(ctx, getters.ContextKeyIn, objMap)
 	}
 
 	inputGroup := gomponents.Group{}
