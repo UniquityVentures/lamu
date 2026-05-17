@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -103,6 +104,13 @@ func (e InputForeignKey[T]) Build(ctx context.Context) Node {
 		if err != nil {
 			slog.Error("InputForeignKey url getter failed", "error", err, "key", e.Key)
 			urlStr = ""
+		} else if urlStr != "" && e.Name != "" {
+			if parsedURL, err := url.Parse(urlStr); err == nil {
+				q := parsedURL.Query()
+				q.Set("target_input", e.Name)
+				parsedURL.RawQuery = q.Encode()
+				urlStr = parsedURL.String()
+			}
 		}
 	}
 

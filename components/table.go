@@ -42,6 +42,14 @@ type DataTable[T any] struct {
 	// getters.ContextKeyTableDisplay set to list vs grid (use getters.RowAttrNavigate, RowAttrNavigateFormat,
 	// RowAttrSelect, RowAttrSelectMulti, RowAttrClickWithClass, etc.).
 	RowAttr getters.Getter[Node]
+	// EnabledColumns optionally restricts visible columns: each key is [TableColumn.Name], value must be true.
+	// Nil getter, or a getter that returns (nil, nil), shows all columns. Columns with empty Name stay visible.
+	// Pair with views.LayerTableToggleColumns and GetterEnabledColumnsFromContext, or wire your own getter.
+	EnabledColumns getters.Getter[map[string]bool]
+}
+
+func (e DataTable[T]) TableColumns() []TableColumn {
+	return e.Columns
 }
 
 func (e DataTable[T]) Build(ctx context.Context) Node {
@@ -56,10 +64,21 @@ func (e DataTable[T]) Build(ctx context.Context) Node {
 		}
 	}
 
+	displayCols := e.Columns
+	if e.EnabledColumns != nil {
+		enabledMap, err := e.EnabledColumns(ctx)
+		if err != nil {
+			return ContainerError{Error: getters.Static(err)}.Build(ctx)
+		}
+		if enabledMap != nil {
+			displayCols = FilterTableColumnsByEnabledMap(e.Columns, enabledMap)
+		}
+	}
+
 	displayNodes := Group{}
 	for name, builder := range e.Displays {
 		displayNodes = append(displayNodes, Div(
-			Attr("x-show", fmt.Sprintf("view === '%s'", name)), Render(builder(e.Columns, e.Data, e.RowAttr), ctx),
+			Attr("x-show", fmt.Sprintf("view === '%s'", name)), Render(builder(displayCols, e.Data, e.RowAttr), ctx),
 		))
 	}
 

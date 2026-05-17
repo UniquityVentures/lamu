@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"github.com/UniquityVentures/lamu/getters"
+	"github.com/UniquityVentures/lamu/registry"
 	. "maragu.dev/gomponents"
 	. "maragu.dev/gomponents/html"
 )
@@ -26,7 +26,7 @@ const (
 // ClientTabs renders client-side Alpine tabs: ribbon + [ClientMatchIf] content.
 type ClientTabs struct {
 	Page
-	Tabs     map[string]getters.Getter[PageInterface]
+	Tabs     []registry.Pair[string, getters.Getter[PageInterface]]
 	Default  getters.Getter[string]
 	StateKey string
 	// Layout selects ribbon orientation; zero is [ClientTabsLayoutResponsive].
@@ -34,6 +34,14 @@ type ClientTabs struct {
 	Attr        getters.Getter[Node]
 	RibbonAttr  getters.Getter[Node]
 	ContentAttr getters.Getter[Node]
+	// DiscoveryChildren, when non-nil, is returned from [ClientTabs.GetChildren] so
+	// [FindChildren] can locate nested components (e.g. filter forms) inside tab panels.
+	// Use the same nodes referenced by [ClientTabs.Tabs] pair values.
+	DiscoveryChildren []PageInterface
+}
+
+func (e ClientTabs) GetChildren() []PageInterface {
+	return e.DiscoveryChildren
 }
 
 func (e ClientTabs) layoutClasses() (outer, ribbon, button string) {
@@ -62,7 +70,9 @@ func (e ClientTabs) Build(ctx context.Context) Node {
 
 	keys := make([]string, 0, len(e.Tabs))
 	match := make(map[string]PageInterface, len(e.Tabs))
-	for key, pageGetter := range e.Tabs {
+	for _, pair := range e.Tabs {
+		key := pair.Key
+		pageGetter := pair.Value
 		if pageGetter == nil {
 			continue
 		}
@@ -79,7 +89,6 @@ func (e ClientTabs) Build(ctx context.Context) Node {
 	if len(keys) == 0 {
 		return Group{}
 	}
-	sort.Strings(keys)
 
 	stateKey := e.StateKey
 	if stateKey == "" {

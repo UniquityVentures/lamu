@@ -6,15 +6,16 @@ import (
 	"testing"
 
 	"github.com/UniquityVentures/lamu/getters"
+	"github.com/UniquityVentures/lamu/registry"
 )
 
 func TestClientTabsBuild(t *testing.T) {
 	tabs := ClientTabs{
 		StateKey: "section",
 		Default:  getters.Static("Reports"),
-		Tabs: map[string]getters.Getter[PageInterface]{
-			"Reports": getters.Static[PageInterface](FieldText{Getter: getters.Static("reports body")}),
-			"Intel":   getters.Static[PageInterface](FieldText{Getter: getters.Static("intel body")}),
+		Tabs: []registry.Pair[string, getters.Getter[PageInterface]]{
+			{Key: "Reports", Value: getters.Static[PageInterface](FieldText{Getter: getters.Static("reports body")})},
+			{Key: "Intel", Value: getters.Static[PageInterface](FieldText{Getter: getters.Static("intel body")})},
 		},
 	}
 
@@ -42,9 +43,9 @@ func TestClientTabsLayoutVertical(t *testing.T) {
 	tabs := ClientTabs{
 		StateKey: "section",
 		Layout:   ClientTabsLayoutVertical,
-		Tabs: map[string]getters.Getter[PageInterface]{
-			"A": getters.Static[PageInterface](FieldText{Getter: getters.Static("a")}),
-			"B": getters.Static[PageInterface](FieldText{Getter: getters.Static("b")}),
+		Tabs: []registry.Pair[string, getters.Getter[PageInterface]]{
+			{Key: "A", Value: getters.Static[PageInterface](FieldText{Getter: getters.Static("a")})},
+			{Key: "B", Value: getters.Static[PageInterface](FieldText{Getter: getters.Static("b")})},
 		},
 	}
 	html := renderNode(t, tabs.Build(context.Background()))
@@ -63,8 +64,8 @@ func TestClientTabsLayoutHorizontal(t *testing.T) {
 	tabs := ClientTabs{
 		StateKey: "section",
 		Layout:   ClientTabsLayoutHorizontal,
-		Tabs: map[string]getters.Getter[PageInterface]{
-			"A": getters.Static[PageInterface](FieldText{Getter: getters.Static("a")}),
+		Tabs: []registry.Pair[string, getters.Getter[PageInterface]]{
+			{Key: "A", Value: getters.Static[PageInterface](FieldText{Getter: getters.Static("a")})},
 		},
 	}
 	html := renderNode(t, tabs.Build(context.Background()))
