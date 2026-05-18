@@ -54,7 +54,7 @@ func (e TableGridContent[T]) Build(ctx context.Context) Node {
 					colNodes = append(colNodes, Render(child, rowCtx))
 				}
 				contentNodes = append(contentNodes, g_html.Div(g_html.Class("text-sm flex gap-2 truncate"),
-					g_html.Span(g_html.Class("font-semibold text-primary"), Text(col.Label+":")),
+					g_html.Span(g_html.Class("font-semibold text-primary"), If(col.Label != "", Text(col.Label))),
 					g_html.Span(Group(colNodes)),
 				))
 			}
