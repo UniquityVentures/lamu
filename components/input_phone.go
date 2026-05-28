@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/UniquityVentures/lamu/getters"
 	"github.com/nyaruka/phonenumbers"
@@ -59,7 +60,11 @@ func (e InputPhone) Parse(v any, _ context.Context) (any, error) {
 	if len(vals) == 0 {
 		return "", nil
 	}
-	num, err := phonenumbers.Parse(vals[0], "IN")
+	raw := strings.TrimSpace(vals[0])
+	if raw == "" {
+		return "", nil
+	}
+	num, err := phonenumbers.Parse(raw, "IN")
 	if err != nil {
 		return nil, err
 	}
