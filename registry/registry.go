@@ -138,37 +138,42 @@ func KeysFromPairs[K comparable, V any](pairs []Pair[K, V]) []K {
 	return out
 }
 
-// PairValueFromKey maps a stored string key to its value using [PairFromPairs].
-// Empty key returns "". Unknown keys return the key unchanged (same fallback as form selects in Caveats).
-func PairValueFromKey(keyGetter getters.Getter[string], pairs []Pair[string, string]) getters.Getter[string] {
+// PairValueFromKey maps a stored key to its display label using [PairFromPairs].
+// Zero key returns "". Unknown keys return fmt.Sprint(key) (same fallback as form selects in Caveats).
+func PairValueFromKey[K comparable](keyGetter getters.Getter[K], pairs []Pair[K, string]) getters.Getter[string] {
 	return func(ctx context.Context) (string, error) {
-		s, err := keyGetter(ctx)
+		key, err := keyGetter(ctx)
 		if err != nil {
 			return "", err
 		}
-		if s == "" {
+		var zero K
+		if key == zero {
 			return "", nil
 		}
-		if p, ok := PairFromPairs(s, pairs); ok {
+		if p, ok := PairFromPairs(key, pairs); ok {
 			return p.Value, nil
 		}
-		return s, nil
+		return fmt.Sprint(key), nil
 	}
 }
 
 // PairFromGetter returns a getter for components.InputSelect current value: a
-// Pair with Key = stored value and Value = label. Empty key returns a zero pair.
-// Unknown keys return {Key: s, Value: s}, matching plugin-local *PairGetter helpers.
-func PairFromGetter(keyGetter getters.Getter[string], pairs []Pair[string, string]) getters.Getter[Pair[string, string]] {
-	return func(ctx context.Context) (Pair[string, string], error) {
-		s, err := keyGetter(ctx)
-		if err != nil || s == "" {
-			return Pair[string, string]{}, nil
+// Pair with Key = stored value and Value = label. Zero key returns a zero pair.
+// Unknown keys return {Key: key, Value: fmt.Sprint(key)}, matching plugin-local *PairGetter helpers.
+func PairFromGetter[K comparable](keyGetter getters.Getter[K], pairs []Pair[K, string]) getters.Getter[Pair[K, string]] {
+	return func(ctx context.Context) (Pair[K, string], error) {
+		key, err := keyGetter(ctx)
+		if err != nil {
+			return Pair[K, string]{}, err
 		}
-		if p, ok := PairFromPairs(s, pairs); ok {
+		var zero K
+		if key == zero {
+			return Pair[K, string]{}, nil
+		}
+		if p, ok := PairFromPairs(key, pairs); ok {
 			return p, nil
 		}
-		return Pair[string, string]{Key: s, Value: s}, nil
+		return Pair[K, string]{Key: key, Value: fmt.Sprint(key)}, nil
 	}
 }
 
