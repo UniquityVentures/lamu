@@ -21,8 +21,9 @@ import (
 // it, and stores the resulting components.ObjectList[T] in the context under Key.
 //
 // Filtering: query parameters whose names match a struct field name or DB column
-// of T are applied automatically — ILIKE for strings, equality for everything
-// else. Unknown parameters are silently ignored. The "sort" parameter applies
+// of T are applied automatically — ILIKE for plain string fields, equality for
+// named string types (e.g. Postgres enums) and all other kinds. Unknown
+// parameters are silently ignored. The "sort" parameter applies
 // ORDER BY clauses, and "page" selects the page number.
 //
 // The parsed query parameters (with form-coerced types where a filter form
@@ -154,11 +155,11 @@ func (m LayerList[T]) Next(view View, next http.Handler) http.Handler {
 				continue
 			}
 			col := f.DBName
-			if f.FieldType.Kind() == reflect.String {
-				// Case-insensitive "contains" match for strings.
+			if f.FieldType.Kind() == reflect.String && f.FieldType.Name() == "string" {
+				// Case-insensitive "contains" match for plain strings only.
+				// Named string types (e.g. Postgres enums) use equality below.
 				query = query.Where(col+" ILIKE ?", "%"+values[0]+"%")
 			} else {
-				// Equality match for non-string types.
 				query = query.Where(col+" = ?", values[0])
 			}
 		}
