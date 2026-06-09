@@ -2,6 +2,7 @@ package p_google_genai
 
 import (
 	"context"
+	"log/slog"
 	"reflect"
 	"strings"
 	"time"
@@ -10,6 +11,12 @@ import (
 )
 
 func NewClient(ctx context.Context) (*genai.Client, error) {
+	if GoogleGenAIConfig.APIKey == "" {
+		// No apiKey in the TOML: fall back to the genai SDK's ambient
+		// environment credentials (GOOGLE_API_KEY / GEMINI_API_KEY). Warn so it
+		// is obvious that a local key is being used instead of configured one.
+		slog.Warn("p_google_genai: no apiKey configured in [Plugins.p_google_genai]; falling back to local environment API key (GOOGLE_API_KEY / GEMINI_API_KEY)")
+	}
 	return genai.NewClient(ctx, &genai.ClientConfig{
 		APIKey: GoogleGenAIConfig.APIKey,
 	})

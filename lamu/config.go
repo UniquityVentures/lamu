@@ -63,10 +63,10 @@ func LoadConfigFromFile(path string, plugins []registry.Pair[string, Plugin]) (L
 		return config, err
 	}
 	BuildAllRegistries(append([]registry.Pair[string, Plugin]{CorePlugin(db, config)}, plugins...))
-	if err := InitDB(db, config); err != nil {
-		return config, err
-	}
 
+	// Decode plugin configs before InitDB so DB-init hooks (e.g. background
+	// workers started in a hook) observe fully populated config rather than
+	// racing against config decoding.
 	for key, cfgPointer := range RegistryConfig.All() {
 		if prim, ok := config.Plugins[key]; ok {
 			err = md.PrimitiveDecode(prim, cfgPointer)
@@ -78,6 +78,10 @@ func LoadConfigFromFile(path string, plugins []registry.Pair[string, Plugin]) (L
 		// Run even when the app has no [Plugins.<key>] table, so plugins can require fields
 		// (e.g. panic if mandatory secrets are missing) instead of silently skipping validation.
 		cfgPointer.PostConfig()
+	}
+
+	if err := InitDB(db, config); err != nil {
+		return config, err
 	}
 
 	return config, nil
