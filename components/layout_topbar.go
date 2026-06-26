@@ -56,6 +56,8 @@ func (e LayoutTopbar) Build(ctx context.Context) gomponents.Node {
 		xData = fmt.Sprintf(`{
 			showRight: $persist(true).as('right-sidebar-show'),
 			activeTab: $persist(%q).as('right-sidebar-active'),
+			rightSidebarWidth: $persist(320).as('right-sidebar-width'),
+			isResizing: false,
 			init() {
 				const keys = %s;
 				if (!keys.includes(this.activeTab) && keys.length > 0) {
@@ -67,6 +69,30 @@ func (e LayoutTopbar) Build(ctx context.Context) gomponents.Node {
 			},
 			setActiveTab(key) {
 				this.activeTab = key;
+			},
+			startResize(e) {
+				e.preventDefault();
+				this.isResizing = true;
+				const startWidth = this.rightSidebarWidth;
+				const startX = e.clientX;
+				
+				const onMouseMove = (moveEvent) => {
+					if (!this.isResizing) return;
+					const deltaX = moveEvent.clientX - startX;
+					let newWidth = startWidth - deltaX;
+					if (newWidth < 240) newWidth = 240;
+					if (newWidth > 600) newWidth = 600;
+					this.rightSidebarWidth = newWidth;
+				};
+				
+				const onMouseUp = () => {
+					this.isResizing = false;
+					document.removeEventListener('mousemove', onMouseMove);
+					document.removeEventListener('mouseup', onMouseUp);
+				};
+				
+				document.addEventListener('mousemove', onMouseMove);
+				document.addEventListener('mouseup', onMouseUp);
 			}
 		}`, defaultKey, keysJS)
 
@@ -88,8 +114,21 @@ func (e LayoutTopbar) Build(ctx context.Context) gomponents.Node {
 	if len(rightSidebarEntries) > 0 {
 		var asideAttrs []gomponents.Node
 		asideAttrs = append(asideAttrs,
-			html.Class("flex-none w-80 border-l border-base-300 bg-base-100 flex flex-col h-full overflow-hidden"),
+			html.Class("flex-none bg-base-100 flex flex-col h-full overflow-hidden"),
 			gomponents.Attr("x-show", "showRight"),
+			gomponents.Attr(":style", "'width: ' + rightSidebarWidth + 'px'"),
+			gomponents.Attr("style", "width: 320px;"), // fallback default width
+		)
+
+		resizer := html.Div(
+			html.Class("w-2 -mx-1 cursor-col-resize flex-none h-full relative z-50 flex items-center justify-center hover:bg-primary/20 active:bg-primary/30 transition-all duration-150 group"),
+			gomponents.Attr("x-show", "showRight"),
+			gomponents.Attr("@mousedown", "startResize($event)"),
+			gomponents.Attr(":class", "isResizing ? 'bg-primary/20' : ''"),
+			html.Div(
+				html.Class("w-[1px] h-full bg-base-300 group-hover:bg-primary group-active:bg-primary transition-colors duration-150"),
+				gomponents.Attr(":class", "isResizing ? 'bg-primary' : ''"),
+			),
 		)
 
 		// Tab Buttons Row (only if more than 1 item)
@@ -128,6 +167,7 @@ func (e LayoutTopbar) Build(ctx context.Context) gomponents.Node {
 			html.Div(html.Class("flex-1 overflow-hidden"),
 				childGroup,
 			),
+			resizer,
 			html.Aside(
 				append(asideAttrs,
 					tabRow,
