@@ -318,6 +318,10 @@ body[data-theme="dark"] #` + mapElID + `.maplibregl-map .mapdisplay-layer-toolba
   function mapDisplayRunInit() {
   var mapEl = document.getElementById(mapElId);
   if (!mapEl) { return; }
+  if (mapEl.classList.contains("maplibregl-map")) { return; }
+  if (window["mapDisplay_" + suffix] && typeof window["mapDisplay_" + suffix].destroy === "function") {
+    try { window["mapDisplay_" + suffix].destroy(); } catch (e) {}
+  }
   if (typeof maplibregl === "undefined") {
     mapDisplayRunInit._n = (mapDisplayRunInit._n || 0) + 1;
     if (mapDisplayRunInit._n > 120) { return; }
@@ -1760,6 +1764,45 @@ body[data-theme="dark"] #` + mapElID + `.maplibregl-map .mapdisplay-layer-toolba
 
   var mapLoaded = false;
 
+  var beforeUnloadListener = function () {
+    shuttingDown = true;
+    if (boundsDebounceTimer) {
+      try { window.clearTimeout(boundsDebounceTimer); } catch (eB3) {}
+      boundsDebounceTimer = 0;
+    }
+    clearReconnectTimer();
+    try {
+      if (ws) {
+        ws.onopen = ws.onmessage = ws.onerror = ws.onclose = null;
+        ws.close();
+      }
+    } catch (eR10) {}
+    ws = null;
+  };
+  window.addEventListener("beforeunload", beforeUnloadListener);
+
+  function syncStyle() {
+    var d = themeIsDark();
+    if (d === lastDark) { return; }
+    bumpMapIconRasterGen();
+    lastDark = d;
+    map.setStyle(d ? styleDark : styleLight);
+    map.once("idle", function () {
+      didFit = !!skipAutoFitBounds;
+      installFromState();
+    });
+  }
+  var observer = null;
+  if (document.body) {
+    observer = new MutationObserver(syncStyle);
+    observer.observe(document.body, { attributes: true, attributeFilter: ["data-theme"] });
+  }
+  var storageListener = function (ev) {
+    if (ev.key !== "theme") { return; }
+    syncStyle();
+  };
+  window.addEventListener("storage", storageListener);
+
   window["mapDisplay_" + suffix] = {
     start: function () {
       shuttingDown = false;
@@ -1778,7 +1821,28 @@ body[data-theme="dark"] #` + mapElID + `.maplibregl-map .mapdisplay-layer-toolba
         return { lng: ll.lng, lat: ll.lat };
       } catch (eApi1) { return null; }
     },
-    isReady: function () { return mapLoaded; }
+    isReady: function () { return mapLoaded; },
+    destroy: function () {
+      shuttingDown = true;
+      stopTick();
+      clearReconnectTimer();
+      if (boundsDebounceTimer) {
+        try { clearTimeout(boundsDebounceTimer); } catch (e) {}
+      }
+      if (ws) {
+        ws.onopen = ws.onmessage = ws.onerror = ws.onclose = null;
+        try { ws.close(); } catch (e) {}
+        ws = null;
+      }
+      window.removeEventListener("beforeunload", beforeUnloadListener);
+      window.removeEventListener("storage", storageListener);
+      if (observer) {
+        try { observer.disconnect(); } catch (e) {}
+      }
+      if (map) {
+        try { map.remove(); } catch (e) {}
+      }
+    }
   };
 
   map.on("load", function () {
@@ -1792,41 +1856,6 @@ body[data-theme="dark"] #` + mapElID + `.maplibregl-map .mapdisplay-layer-toolba
     if (!deferStart) {
       connectWebSocket();
     }
-  });
-
-  window.addEventListener("beforeunload", function () {
-    shuttingDown = true;
-    if (boundsDebounceTimer) {
-      try { window.clearTimeout(boundsDebounceTimer); } catch (eB3) {}
-      boundsDebounceTimer = 0;
-    }
-    clearReconnectTimer();
-    try {
-      if (ws) {
-        ws.onopen = ws.onmessage = ws.onerror = ws.onclose = null;
-        ws.close();
-      }
-    } catch (eR10) {}
-    ws = null;
-  });
-
-  function syncStyle() {
-    var d = themeIsDark();
-    if (d === lastDark) { return; }
-    bumpMapIconRasterGen();
-    lastDark = d;
-    map.setStyle(d ? styleDark : styleLight);
-    map.once("idle", function () {
-      didFit = !!skipAutoFitBounds;
-      installFromState();
-    });
-  }
-  if (document.body) {
-    new MutationObserver(syncStyle).observe(document.body, { attributes: true, attributeFilter: ["data-theme"] });
-  }
-  window.addEventListener("storage", function (ev) {
-    if (ev.key !== "theme") { return; }
-    syncStyle();
   });
 
   }

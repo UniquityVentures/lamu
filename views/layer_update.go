@@ -103,9 +103,11 @@ func (m LayerUpdate[T]) Next(view View, next http.Handler) http.Handler {
 					stmt.Model = &record
 				}).Where("id = ?", id)
 				updateQuery = m.QueryPatchers.Apply(view, r, updateQuery)
-				_, err := updateQuery.Updates(ctx, record)
-				if err != nil {
-					return err
+				// Update column-by-column so nil/empty parsed values persist as SQL NULL.
+				for field, value := range regularValues {
+					if _, err := updateQuery.Update(ctx, field, value); err != nil {
+						return err
+					}
 				}
 			}
 

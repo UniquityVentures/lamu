@@ -18,7 +18,6 @@ func GetPlugin() registry.Pair[string, lamu.Plugin] {
 	if err != nil {
 		log.Panic(err)
 	}
-
 	return registry.Pair[string, lamu.Plugin]{
 		Key: "p_dashboard", Value: lamu.Plugin{
 			Type:        lamu.PluginTypeAddon,

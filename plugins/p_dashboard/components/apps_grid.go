@@ -56,8 +56,12 @@ func (e AppsGrid) Build(ctx context.Context) Node {
 
 	group := Group{}
 	for _, app := range apps {
+		var href string
+		if app.URL != nil {
+			href = app.URL.String()
+		}
 		group = append(group, A(
-			Href(app.URL.String()),
+			Href(href),
 			Class("btn btn-md h-auto flex-col space-y-1 py-4"),
 			Attr("x-show", fmt.Sprintf("'%s'.toLowerCase().includes(search.toLowerCase())", app.VerboseName)),
 			Attr("x-cloak"), components.Render(components.Icon{Name: app.Icon, Classes: "w-8 h-8"}, ctx), Div(
