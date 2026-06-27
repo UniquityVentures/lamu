@@ -1,6 +1,8 @@
 package p_filesystem
 
 import (
+	"net/http"
+
 	"github.com/UniquityVentures/lamu/lamu"
 	"github.com/UniquityVentures/lamu/registry"
 )
@@ -75,6 +77,10 @@ func pluginRoutes() lamu.PluginFeatures[lamu.Route] {
 			{Key: "filesystem.MoveRoute", Value: lamu.Route{
 				Path:    AppUrl + "{id}/move/",
 				Handler: lamu.NewDynamicView("filesystem.MoveView"),
+			}},
+			{Key: "filesystem.ChatUploadRoute", Value: lamu.Route{
+				Path:    AppUrl + "chat-upload/",
+				Handler: http.HandlerFunc(chatUploadHandler),
 			}},
 		},
 	}

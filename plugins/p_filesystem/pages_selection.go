@@ -27,20 +27,25 @@ func selectionTable(name, filterName, childRoute string, multi, selectDirectorie
 	return &components.Modal{
 		UID: modalID,
 		Children: []components.PageInterface{
-			&components.DataTable[VNode]{
-				UID:      "filesystem-selection-table-" + name,
-				Title:    title,
-				Subtitle: subtitle,
-				Data:     getters.Key[components.ObjectList[VNode]]("vnodes"),
-				Actions: []components.PageInterface{
-					&components.TableButtonFilter{Child: lamu.DynamicPage{Name: filterName}},
-				},
-				RowAttr: getters.RowAttrClickWithClass(onClick, rowClass),
-				Columns: []components.TableColumn{
-					{Label: "Name", Name: "Name", Children: []components.PageInterface{&components.FieldText{Getter: getters.Key[string]("$row.Name")}}},
-					{Label: "Type", Name: "Type", Children: []components.PageInterface{&components.FieldText{Getter: vnodeTypeForKey("$row")}}},
-					{Label: "Path", Name: "Path", Children: []components.PageInterface{&components.FieldText{Getter: getters.Key[string]("$row.Name")}}},
-					{Label: "Modified", Name: "UpdatedAt", Children: []components.PageInterface{&components.FieldDatetime{Getter: getters.Key[time.Time]("$row.UpdatedAt")}}},
+			&components.ClientData{
+				Data: "{}",
+				Children: []components.PageInterface{
+					&components.DataTable[VNode]{
+						UID:      "filesystem-selection-table-" + name,
+						Title:    title,
+						Subtitle: subtitle,
+						Data:     getters.Key[components.ObjectList[VNode]]("vnodes"),
+						Actions: []components.PageInterface{
+							&components.TableButtonFilter{Child: lamu.DynamicPage{Name: filterName}},
+						},
+						RowAttr: getters.RowAttrClickWithClass(onClick, rowClass),
+						Columns: []components.TableColumn{
+							{Label: "Name", Name: "Name", Children: []components.PageInterface{&components.FieldText{Getter: getters.Key[string]("$row.Name")}}},
+							{Label: "Type", Name: "Type", Children: []components.PageInterface{&components.FieldText{Getter: vnodeTypeForKey("$row")}}},
+							{Label: "Path", Name: "Path", Children: []components.PageInterface{&components.FieldText{Getter: getters.Key[string]("$row.Name")}}},
+							{Label: "Modified", Name: "UpdatedAt", Children: []components.PageInterface{&components.FieldDatetime{Getter: getters.Key[time.Time]("$row.UpdatedAt")}}},
+						},
+					},
 				},
 			},
 		},

@@ -2,6 +2,7 @@ package p_filesystem
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -655,4 +656,40 @@ func pluginViews() lamu.PluginFeatures[*views.View] {
 				})},
 		},
 	}
+}
+
+// chatUploadHandler accepts multipart files, creates VNodes, and returns a JSON
+// array of {id, name} objects for use by the chat interface file upload button.
+func chatUploadHandler(w http.ResponseWriter, r *http.Request) {
+	db, err := filesystemDB(r)
+	if err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+	if err := r.ParseMultipartForm(64 << 20); err != nil {
+		http.Error(w, `{"error":"invalid multipart form"}`, http.StatusBadRequest)
+		return
+	}
+	files := r.MultipartForm.File["Files"]
+	if len(files) == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("[]"))
+		return
+	}
+	type nodeResult struct {
+		ID   uint   `json:"id"`
+		Name string `json:"name"`
+	}
+	results := make([]nodeResult, 0, len(files))
+	for _, fh := range files {
+		node, err := createComponentVNode(db, "", fh)
+		if err != nil {
+			slog.Error("chatUploadHandler: failed to create vnode", "file", fh.Filename, "error", err)
+			continue
+		}
+		results = append(results, nodeResult{ID: node.ID, Name: node.Name})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
 }
