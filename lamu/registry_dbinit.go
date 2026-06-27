@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/UniquityVentures/lamu/registry"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // DBInitHook runs after core DB setup (migrations, callbacks). Hooks run in registration order.
@@ -32,6 +34,15 @@ func GetDbConn(config LamuConfig) (*gorm.DB, error) {
 
 	db, err := gorm.Open(dialector, &gorm.Config{
 		PrepareStmt: true,
+		Logger: logger.New(
+			log.Default(),
+			logger.Config{
+				SlowThreshold:             time.Hour * 24, // Practically disables slow log
+				LogLevel:                  logger.Warn,
+				IgnoreRecordNotFoundError: true,
+				Colorful:                  true,
+			},
+		),
 	})
 	if err != nil {
 		return nil, err

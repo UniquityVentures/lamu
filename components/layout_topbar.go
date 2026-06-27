@@ -114,14 +114,32 @@ func (e LayoutTopbar) Build(ctx context.Context) gomponents.Node {
 	if len(rightSidebarEntries) > 0 {
 		var asideAttrs []gomponents.Node
 		asideAttrs = append(asideAttrs,
-			html.Class("flex-none bg-base-100 flex flex-col h-full overflow-hidden"),
+			html.Class("flex-none bg-base-100 flex flex-col h-full overflow-hidden absolute right-0 top-0 z-40 border-l border-base-300 shadow-2xl max-w-[85vw] sm:max-w-[400px] xl:static xl:border-l-0 xl:shadow-none xl:max-w-none"),
 			gomponents.Attr("x-show", "showRight"),
+			gomponents.Attr("x-transition:enter", "transition ease-out duration-200 transform"),
+			gomponents.Attr("x-transition:enter-start", "translate-x-full"),
+			gomponents.Attr("x-transition:enter-end", "translate-x-0"),
+			gomponents.Attr("x-transition:leave", "transition ease-in duration-150 transform"),
+			gomponents.Attr("x-transition:leave-start", "translate-x-0"),
+			gomponents.Attr("x-transition:leave-end", "translate-x-full"),
 			gomponents.Attr(":style", "'width: ' + rightSidebarWidth + 'px'"),
 			gomponents.Attr("style", "width: 320px;"), // fallback default width
 		)
 
+		backdrop := html.Div(
+			html.Class("xl:hidden absolute inset-0 bg-neutral-900/40 z-30 transition-opacity"),
+			gomponents.Attr("x-show", "showRight"),
+			gomponents.Attr("x-transition:enter", "transition ease-out duration-200"),
+			gomponents.Attr("x-transition:enter-start", "opacity-0"),
+			gomponents.Attr("x-transition:enter-end", "opacity-100"),
+			gomponents.Attr("x-transition:leave", "transition ease-in duration-150"),
+			gomponents.Attr("x-transition:leave-start", "opacity-100"),
+			gomponents.Attr("x-transition:leave-end", "opacity-0"),
+			gomponents.Attr("@click", "toggleRight()"),
+		)
+
 		resizer := html.Div(
-			html.Class("w-2 -mx-1 cursor-col-resize flex-none h-full relative z-50 flex items-center justify-center hover:bg-primary/20 active:bg-primary/30 transition-all duration-150 group"),
+			html.Class("hidden xl:flex w-2 -mx-1 cursor-col-resize flex-none h-full relative z-50 items-center justify-center hover:bg-primary/20 active:bg-primary/30 transition-all duration-150 group"),
 			gomponents.Attr("x-show", "showRight"),
 			gomponents.Attr("@mousedown", "startResize($event)"),
 			gomponents.Attr(":class", "isResizing ? 'bg-primary/20' : ''"),
@@ -154,7 +172,7 @@ func (e LayoutTopbar) Build(ctx context.Context) gomponents.Node {
 		for _, entry := range rightSidebarEntries {
 			contentPanels = append(contentPanels, html.Div(
 				gomponents.Attr("x-show", fmt.Sprintf("activeTab === %q", entry.Key)),
-				html.Class("h-full overflow-y-auto p-4"),
+				html.Class("h-full overflow-y-auto p-0"),
 				Render(entry.Value.Content, ctx),
 			))
 		}
@@ -163,10 +181,11 @@ func (e LayoutTopbar) Build(ctx context.Context) gomponents.Node {
 			gomponents.Group(contentPanels),
 		)
 
-		mainLayout = html.Div(html.Class("flex-1 flex overflow-hidden"),
+		mainLayout = html.Div(html.Class("flex-1 flex overflow-hidden relative"),
 			html.Div(html.Class("flex-1 overflow-hidden"),
 				childGroup,
 			),
+			backdrop,
 			resizer,
 			html.Aside(
 				append(asideAttrs,
