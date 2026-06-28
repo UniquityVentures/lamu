@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 
+	"github.com/UniquityVentures/lamu/plugins/p_filesystem"
 	"github.com/UniquityVentures/lamu/plugins/p_google_genai"
 	"github.com/UniquityVentures/lamu/registry"
 	"github.com/expr-lang/expr"
@@ -95,8 +97,83 @@ func (t *runExprTool) Run(ctx context.Context, db *gorm.DB, args map[string]any)
 	return map[string]any{"result": string(encoded)}, nil
 }
 
+// ---- run_expr_file tool ----
+
+type runExprFileArgs struct {
+	Path string         `json:"path"`
+	Args map[string]any `json:"args,omitempty"`
+}
+
+type runExprFileTool struct{}
+
+func (t *runExprFileTool) Name() string { return "run_expr_file" }
+
+func (t *runExprFileTool) Declaration() *genai.FunctionDeclaration {
+	return &genai.FunctionDeclaration{
+		Name: "run_expr_file",
+		Description: "Read and evaluate an expression script stored in a virtual file (VNode) using the expr-lang evaluator. " +
+			"Merges the provided args into the common environment before running.",
+		Parameters: p_google_genai.NewSchema[runExprFileArgs](),
+	}
+}
+
+func (t *runExprFileTool) Run(ctx context.Context, db *gorm.DB, args map[string]any) (map[string]any, error) {
+	var a runExprFileArgs
+	if b, err := json.Marshal(args); err == nil {
+		_ = json.Unmarshal(b, &a)
+	}
+	if a.Path == "" {
+		return nil, fmt.Errorf("path is required")
+	}
+
+	node, _, nerr := p_filesystem.GetVNodeByPath(db, a.Path)
+	if nerr != nil {
+		return nil, nerr
+	}
+	if node == nil {
+		return nil, fmt.Errorf("file not found at path %q", a.Path)
+	}
+	if node.IsDirectory {
+		return nil, fmt.Errorf("path %q is a directory, not a file", a.Path)
+	}
+
+	dl, dlerr := node.OpenDownload()
+	if dlerr != nil {
+		return nil, dlerr
+	}
+	defer dl.Reader.Close()
+
+	contentBytes, readErr := io.ReadAll(dl.Reader)
+	if readErr != nil {
+		return nil, readErr
+	}
+
+	env := exprEnv(ctx, db)
+	for k, v := range a.Args {
+		env[k] = v
+	}
+
+	program, err := expr.Compile(string(contentBytes), expr.Env(env))
+	if err != nil {
+		return map[string]any{"error": err.Error()}, nil
+	}
+
+	result, err := expr.Run(program, env)
+	if err != nil {
+		return map[string]any{"error": err.Error()}, nil
+	}
+
+	// JSON-encode result so any type (slice, map, struct) round-trips cleanly.
+	encoded, err := json.Marshal(result)
+	if err != nil {
+		return map[string]any{"result": fmt.Sprint(result)}, nil
+	}
+	return map[string]any{"result": string(encoded)}, nil
+}
+
 func init() {
 	LlmToolRegistry.Register("run_expr", &runExprTool{})
+	LlmToolRegistry.Register("run_expr_file", &runExprFileTool{})
 	LlmToolRegistry.Register("list_expr_env", &listExprEnvTool{})
 }
 

@@ -127,11 +127,7 @@ func registerSkillsPages() {
 								Title:   "Files",
 								Classes: "mt-4 block",
 								Children: []components.PageInterface{
-									&components.FieldManyToMany[p_filesystem.VNode]{
-										Getter:  getters.Key[[]p_filesystem.VNode]("$in.Files"),
-										Display: getters.Key[string]("$row.Name"),
-										Link:    lamu.RoutePath("filesystem.DetailRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("$row.ID"))}),
-									},
+									&p_filesystem.FieldManyFile{VNode: getters.Key[[]p_filesystem.VNode]("$in.Files")},
 								},
 							},
 						},

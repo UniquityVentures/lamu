@@ -91,6 +91,9 @@ func init() {
 			WithLayer("llm_assistant.skills.detail", views.LayerDetail[Skill]{
 				Key:          getters.Static("skill"),
 				PathParamKey: getters.Static("id"),
+				QueryPatchers: views.QueryPatchers[Skill]{
+					{Key: "llm_assistant.skills.preload", Value: views.QueryPatcherPreload[Skill]{Fields: []string{"Files"}}},
+				},
 			}).
 			WithLayer("llm_assistant.skills.update", views.LayerUpdate[Skill]{
 				Key: getters.Static("skill"),
