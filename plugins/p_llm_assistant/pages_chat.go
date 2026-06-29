@@ -123,11 +123,32 @@ document.body.addEventListener("htmx:wsAfterSend", function(event) {
       data.items = [];
     }
   }
-});`)),
+});
+function scrollToBottom() {
+  var transcript = document.getElementById("llm_assistant_transcript");
+  if (transcript) {
+    transcript.scrollTop = transcript.scrollHeight;
+  }
+}
+setTimeout(scrollToBottom, 50);
+if (!window.llm_assistant_scroll_registered) {
+  window.llm_assistant_scroll_registered = true;
+  document.body.addEventListener("htmx:oobAfterSwap", function(event) {
+    if (event.detail && event.detail.target && event.detail.target.id === "llm_assistant_transcript") {
+      scrollToBottom();
+    }
+  });
+  document.body.addEventListener("htmx:afterSwap", function(event) {
+    if (event.detail && event.detail.target && (event.detail.target.id === "sidebar-chat-container" || event.detail.target.querySelector("#llm_assistant_transcript"))) {
+      scrollToBottom();
+    }
+  });
+}`)),
 		Div(ID("llm_assistant_errors")),
 		Div(
 			ID("llm_assistant_transcript"),
 			Class(transcriptClass),
+			Attr("x-init", "$nextTick(() => { $el.scrollTop = $el.scrollHeight; setTimeout(() => { $el.scrollTop = $el.scrollHeight }, 100) })"),
 			Group(transcriptInner),
 		),
 		Div(

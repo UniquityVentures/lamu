@@ -65,4 +65,9 @@ func init() {
 		Path:    AppUrl + "skills/{id}/delete/",
 		Handler: lamu.NewDynamicView("llm_assistant.SkillsDeleteView"),
 	})
+
+	registerPluginRoute("llm_assistant.SkillsExportRoute", lamu.Route{
+		Path:    AppUrl + "skills/{id}/export/",
+		Handler: p_users.RequireAuth(http.HandlerFunc(handleSkillExport)),
+	})
 }
