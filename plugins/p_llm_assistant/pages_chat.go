@@ -130,17 +130,37 @@ function scrollToBottom() {
     transcript.scrollTop = transcript.scrollHeight;
   }
 }
-setTimeout(scrollToBottom, 50);
+document.addEventListener("DOMContentLoaded", scrollToBottom);
 if (!window.llm_assistant_scroll_registered) {
   window.llm_assistant_scroll_registered = true;
+  
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        scrollToBottom();
+      }
+    });
+  });
+
+  var observeTranscript = function() {
+    var transcript = document.getElementById("llm_assistant_transcript");
+    if (transcript) {
+      observer.observe(transcript);
+    }
+  };
+
+  observeTranscript();
+
   document.body.addEventListener("htmx:oobAfterSwap", function(event) {
     if (event.detail && event.detail.target && event.detail.target.id === "llm_assistant_transcript") {
       scrollToBottom();
+      observeTranscript();
     }
   });
   document.body.addEventListener("htmx:afterSwap", function(event) {
     if (event.detail && event.detail.target && (event.detail.target.id === "sidebar-chat-container" || event.detail.target.querySelector("#llm_assistant_transcript"))) {
       scrollToBottom();
+      observeTranscript();
     }
   });
 }`)),
