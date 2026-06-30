@@ -141,10 +141,12 @@ func (m UserMessage) Save(r *http.Request) (UserMessage, error) {
 	}
 
 	inner := strings.TrimSpace(assistantGenaiContentHTML(ctx, &content))
+	var sb strings.Builder
+	_ = assistantBubbleUserHTML(inner).Render(&sb)
 	m.RenderedHTML = fmt.Sprintf(
-		`<input id="llm_assistant_session_id" hx-swap-oob="true" type="hidden" name="session_id" value="%d"><div id="llm_assistant_transcript" hx-swap-oob="beforeend"><div class="w-full flex flex-col items-center"><div class="w-full max-w-2xl bg-base-300/30 border border-base-300/50 rounded-xl text-sm p-2">%s</div></div></div>`,
+		`<input id="llm_assistant_session_id" hx-swap-oob="true" type="hidden" name="session_id" value="%d"><div id="llm_assistant_transcript" hx-swap-oob="beforeend">%s</div>`,
 		m.SessionID,
-		inner,
+		sb.String(),
 	)
 
 	return m, nil
@@ -363,9 +365,11 @@ func assistantToolHTML(ctx context.Context, content *genai.Content) string {
 	if inner == "" {
 		inner = `<span class="opacity-50 text-sm">(empty)</span>`
 	}
+	var sb strings.Builder
+	_ = assistantBubbleToolHTML(inner).Render(&sb)
 	return fmt.Sprintf(
-		`<div id="llm_assistant_transcript" hx-swap-oob="beforeend"><div class="w-full flex flex-col items-center mb-4"><div class="text-xs opacity-70 mb-1 text-center">Tool</div><details class="collapse collapse-arrow bg-base-200 border border-base-300 rounded-lg text-sm w-full max-w-2xl"><summary class="collapse-title font-medium cursor-pointer pr-12">Tool Execution</summary><div class="collapse-content p-3 pt-0 overflow-x-auto">%s</div></details></div></div>`,
-		inner,
+		`<div id="llm_assistant_transcript" hx-swap-oob="beforeend">%s</div>`,
+		sb.String(),
 	)
 }
 
@@ -374,9 +378,11 @@ func assistantFinalHTML(ctx context.Context, content *genai.Content) string {
 	if inner == "" {
 		inner = `<span class="opacity-50">(empty)</span>`
 	}
+	var sb strings.Builder
+	_ = assistantBubbleAssistantHTML(inner).Render(&sb)
 	return fmt.Sprintf(
-		`<div id="llm_assistant_transcript" hx-swap-oob="beforeend"><div class="w-full flex flex-col items-center mb-4"><div class="w-full max-w-2xl text-sm px-2">%s</div></div></div>`,
-		inner,
+		`<div id="llm_assistant_transcript" hx-swap-oob="beforeend">%s</div>`,
+		sb.String(),
 	)
 }
 
@@ -484,17 +490,17 @@ func assistantFunctionCallHTML(fc *genai.FunctionCall) string {
 	if fc.Name != "" {
 		title = fmt.Sprintf("Function call: %s", html.EscapeString(fc.Name))
 	}
-	b.WriteString(fmt.Sprintf(`<details class="collapse collapse-arrow bg-base-200 border border-base-300 rounded-lg text-sm max-w-full my-2">`+
-		`<summary class="collapse-title font-medium cursor-pointer pr-12">%s</summary>`+
+	fmt.Fprintf(&b, `<details class="collapse text-sm w-fit">`+
+		`<summary class="collapse-title font-medium cursor-pointer p-0">%s</summary>`+
 		`<div class="collapse-content p-3 pt-0 overflow-x-auto">`+
-		`<div class="assistant-part assistant-part-fn-call text-sm space-y-2 mt-2">`, title))
+		`<div class="assistant-part assistant-part-fn-call text-sm space-y-2 mt-2">`, title)
 	if fc.ID != "" {
 		b.WriteString(`<div class="mb-1 text-xs opacity-70">ID <code>`)
 		b.WriteString(html.EscapeString(fc.ID))
 		b.WriteString(`</code></div>`)
 	}
 	if fc.WillContinue != nil {
-		b.WriteString(fmt.Sprintf(`<div class="mb-1 text-xs">willContinue: <span class="font-mono">%t</span></div>`, *fc.WillContinue))
+		fmt.Fprintf(&b, `<div class="mb-1 text-xs">willContinue: <span class="font-mono">%t</span></div>`, *fc.WillContinue)
 	}
 	if len(fc.Args) > 0 {
 		b.WriteString(`<div class="text-xs font-medium opacity-70 mb-1">Arguments</div>`)

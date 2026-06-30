@@ -362,18 +362,17 @@ func assistantBubbleUserHTML(inner string) Node {
 
 func assistantBubbleAssistantHTML(inner string) Node {
 	return Div(
-		Class("w-full flex flex-col items-center mb-4"),
-		Div(Class("w-full max-w-2xl text-sm px-2"), Raw(inner)),
+		Class("w-full flex flex-col items-center"),
+		Div(Class("w-full max-w-2xl text-sm"), Raw(inner)),
 	)
 }
 
 func assistantBubbleToolHTML(inner string) Node {
 	return Div(
-		Class("w-full flex flex-col items-center mb-4"),
-		Div(Class("text-xs opacity-70 mb-1 text-center"), Text("Tool")),
+		Class("w-full flex flex-col"),
 		El("details",
-			Class("collapse collapse-arrow bg-base-200 border border-base-300 rounded-lg text-sm w-full max-w-2xl"),
-			El("summary", Class("collapse-title font-medium cursor-pointer pr-12"), Text("Tool Execution")),
+			Class("collapse text-sm w-fit"),
+			El("summary", Class("collapse-title font-medium cursor-pointer p-0"), Text("Tool Execution")),
 			Div(Class("collapse-content p-3 pt-0 overflow-x-auto"), Raw(inner)),
 		),
 	)
