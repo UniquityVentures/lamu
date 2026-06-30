@@ -100,7 +100,14 @@ func (e LayoutTopbar) Build(ctx context.Context) gomponents.Node {
 		topbarItems = append(topbarItems, html.Button(
 			html.Class("btn btn-sm btn-square btn-ghost"),
 			gomponents.Attr("@click", "toggleRight()"),
-			Render(Icon{Name: "bars-3-bottom-right"}, ctx),
+			Render(Icon{
+				Name:  "bars-3-bottom-right",
+				Attrs: []gomponents.Node{gomponents.Attr("x-show", "!showRight")},
+			}, ctx),
+			Render(Icon{
+				Name:  "x-mark",
+				Attrs: []gomponents.Node{gomponents.Attr("x-show", "showRight")},
+			}, ctx),
 		))
 	}
 

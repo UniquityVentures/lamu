@@ -153,7 +153,7 @@ if (!window.llm_assistant_scroll_registered) {
 		),
 		Div(
 			ID("llm_assistant_stream"),
-			Class("min-h-[1.5rem] border border-dashed border-base-300 rounded p-2 text-sm"),
+			Class("w-full max-w-2xl mx-auto mb-4 min-h-[1.5rem] border border-dashed border-base-300 rounded-lg p-4 text-sm"),
 		),
 		html.Form(ID("llm_assistant_chat_form"), Class("flex flex-col gap-2"), Attr("ws-send", ""),
 			Attr("x-data", `{
@@ -197,7 +197,7 @@ if (!window.llm_assistant_scroll_registered) {
 					try {
 						const fd = new FormData();
 						for (const f of fileInput.files) { fd.append('Files', f); }
-						const resp = await fetch('` + multiUploadUrl + `', {
+						const resp = await fetch('`+multiUploadUrl+`', {
 							method: 'POST',
 							headers: { 'HX-Request': 'true' },
 							body: fd
@@ -246,7 +246,7 @@ if (!window.llm_assistant_scroll_registered) {
 			),
 
 			Textarea(ID("llm_assistant_chat_message"), Name("message"), Class("textarea textarea-bordered w-full"), Rows("3"), Placeholder("Message…"), Required()),
-			
+
 			Div(
 				Class("flex justify-end items-center gap-2"),
 				Label(
@@ -335,26 +335,24 @@ func assistantTranscriptNodes(ctx context.Context, sessionID uint) ([]Node, erro
 
 func assistantBubbleUserHTML(inner string) Node {
 	return Div(
-		Class("chat chat-end mb-2"),
-		Div(Class("chat-header text-xs opacity-70"), Text("You")),
-		Div(Class("chat-bubble text-sm chat-bubble-primary"), Raw(inner)),
+		Class("w-full flex flex-col items-center"),
+		Div(Class("w-full max-w-2xl bg-base-300/30 border border-base-300/50 rounded-xl text-sm p-2"), Raw(inner)),
 	)
 }
 
 func assistantBubbleAssistantHTML(inner string) Node {
 	return Div(
-		Class("chat chat-start mb-2"),
-		Div(Class("chat-header text-xs opacity-70"), Text("Assistant")),
-		Div(Class("chat-bubble text-sm chat-bubble-secondary"), Raw(inner)),
+		Class("w-full flex flex-col items-center mb-4"),
+		Div(Class("w-full max-w-2xl text-sm px-2"), Raw(inner)),
 	)
 }
 
 func assistantBubbleToolHTML(inner string) Node {
 	return Div(
-		Class("chat chat-start mb-2 w-full"),
-		Div(Class("chat-header text-xs opacity-70"), Text("Tool")),
+		Class("w-full flex flex-col items-center mb-4"),
+		Div(Class("text-xs opacity-70 mb-1 text-center"), Text("Tool")),
 		El("details",
-			Class("collapse collapse-arrow bg-base-200 border border-base-300 rounded-lg text-sm max-w-full"),
+			Class("collapse collapse-arrow bg-base-200 border border-base-300 rounded-lg text-sm w-full max-w-2xl"),
 			El("summary", Class("collapse-title font-medium cursor-pointer pr-12"), Text("Tool Execution")),
 			Div(Class("collapse-content p-3 pt-0 overflow-x-auto"), Raw(inner)),
 		),

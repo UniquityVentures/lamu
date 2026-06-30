@@ -26,10 +26,10 @@ import (
 )
 
 type UserMessage struct {
-	SessionID uint     `json:"session_id"`
-	Message   string   `json:"message"`
-	Files     []string `json:"Files"`
-	FilesHTML string   `json:"-"`
+	SessionID    uint     `json:"session_id"`
+	Message      string   `json:"message"`
+	Files        []string `json:"Files"`
+	RenderedHTML string   `json:"-"`
 }
 
 func (m *UserMessage) UnmarshalJSON(data []byte) error {
@@ -61,12 +61,7 @@ func (m *UserMessage) UnmarshalJSON(data []byte) error {
 }
 
 func (m UserMessage) ToHTML() string {
-	return fmt.Sprintf(
-		`<input id="llm_assistant_session_id" hx-swap-oob="true" type="hidden" name="session_id" value="%d"><div id="llm_assistant_transcript" hx-swap-oob="beforeend"><div class="chat chat-end mb-2"><div class="chat-header text-xs opacity-70">You</div><div class="chat-bubble chat-bubble-primary whitespace-pre-wrap">%s%s</div></div></div>`,
-		m.SessionID,
-		html.EscapeString(m.Message),
-		m.FilesHTML,
-	)
+	return m.RenderedHTML
 }
 
 func (m UserMessage) Save(r *http.Request) (UserMessage, error) {
@@ -101,7 +96,6 @@ func (m UserMessage) Save(r *http.Request) (UserMessage, error) {
 		parts = append(parts, &genai.Part{Text: m.Message})
 	}
 
-	var fileListHTML strings.Builder
 	for _, fileIDStr := range m.Files {
 		id, err := strconv.ParseUint(fileIDStr, 10, 64)
 		if err != nil {
@@ -131,18 +125,7 @@ func (m UserMessage) Save(r *http.Request) (UserMessage, error) {
 				DisplayName: vnode.Name,
 			},
 		})
-		detailURLGetter := lamu.RoutePath("filesystem.DetailRoute", map[string]getters.Getter[any]{
-			"id": getters.Any(getters.Static(vnode.ID)),
-		})
-		detailURL, _ := detailURLGetter(ctx)
-		fileListHTML.WriteString(fmt.Sprintf(
-			`<a href="%s" class="assistant-part assistant-part-inline rounded-box border border-base-300 p-2 text-xs mt-1 block hover:bg-base-200/20 text-white hover:text-white transition-colors"><div class="font-medium opacity-80">File</div><div class="font-semibold">%s</div></a>`,
-			detailURL,
-			html.EscapeString(vnode.Name),
-		))
 	}
-
-	m.FilesHTML = fileListHTML.String()
 
 	if len(parts) == 0 {
 		return UserMessage{}, fmt.Errorf("message is empty")
@@ -156,6 +139,14 @@ func (m UserMessage) Save(r *http.Request) (UserMessage, error) {
 	if err = session.SaveContent(ctx, content); err != nil {
 		return UserMessage{}, err
 	}
+
+	inner := strings.TrimSpace(assistantGenaiContentHTML(ctx, &content))
+	m.RenderedHTML = fmt.Sprintf(
+		`<input id="llm_assistant_session_id" hx-swap-oob="true" type="hidden" name="session_id" value="%d"><div id="llm_assistant_transcript" hx-swap-oob="beforeend"><div class="w-full flex flex-col items-center"><div class="w-full max-w-2xl bg-base-300/30 border border-base-300/50 rounded-xl text-sm p-2">%s</div></div></div>`,
+		m.SessionID,
+		inner,
+	)
+
 	return m, nil
 }
 
@@ -350,7 +341,7 @@ func assistantChatFormReadyHTML() string {
 }
 
 func assistantClearStreamHTML() string {
-	return `<div id="llm_assistant_stream" hx-swap-oob="true" class="min-h-[1.5rem] border border-dashed border-base-300 rounded p-2 text-sm"></div>`
+	return `<div id="llm_assistant_stream" hx-swap-oob="true" class="w-full max-w-2xl mx-auto mb-4 min-h-[1.5rem] border border-dashed border-base-300 rounded-lg p-4 text-sm"></div>`
 }
 
 func assistantStreamHTML(ctx context.Context, merged *genai.Content) string {
@@ -362,7 +353,7 @@ func assistantStreamHTML(ctx context.Context, merged *genai.Content) string {
 		return ""
 	}
 	return fmt.Sprintf(
-		`<div id="llm_assistant_stream" hx-swap-oob="true" class="min-h-[1.5rem] border border-dashed border-base-300 rounded p-2 text-sm">%s</div>`,
+		`<div id="llm_assistant_stream" hx-swap-oob="true" class="w-full max-w-2xl mx-auto mb-4 min-h-[1.5rem] border border-dashed border-base-300 rounded-lg p-4 text-sm">%s</div>`,
 		inner,
 	)
 }
@@ -373,7 +364,7 @@ func assistantToolHTML(ctx context.Context, content *genai.Content) string {
 		inner = `<span class="opacity-50 text-sm">(empty)</span>`
 	}
 	return fmt.Sprintf(
-		`<div id="llm_assistant_transcript" hx-swap-oob="beforeend"><div class="chat chat-start mb-2 w-full"><div class="chat-header text-xs opacity-70">Tool</div><details class="collapse collapse-arrow bg-base-200 border border-base-300 rounded-lg text-sm max-w-full"><summary class="collapse-title font-medium cursor-pointer pr-12">Tool Execution</summary><div class="collapse-content p-3 pt-0 overflow-x-auto">%s</div></details></div></div>`,
+		`<div id="llm_assistant_transcript" hx-swap-oob="beforeend"><div class="w-full flex flex-col items-center mb-4"><div class="text-xs opacity-70 mb-1 text-center">Tool</div><details class="collapse collapse-arrow bg-base-200 border border-base-300 rounded-lg text-sm w-full max-w-2xl"><summary class="collapse-title font-medium cursor-pointer pr-12">Tool Execution</summary><div class="collapse-content p-3 pt-0 overflow-x-auto">%s</div></details></div></div>`,
 		inner,
 	)
 }
@@ -384,7 +375,7 @@ func assistantFinalHTML(ctx context.Context, content *genai.Content) string {
 		inner = `<span class="opacity-50">(empty)</span>`
 	}
 	return fmt.Sprintf(
-		`<div id="llm_assistant_transcript" hx-swap-oob="beforeend"><div class="chat chat-start mb-2"><div class="chat-header text-xs opacity-70">Assistant</div><div class="chat-bubble chat-bubble-secondary">%s</div></div></div>`,
+		`<div id="llm_assistant_transcript" hx-swap-oob="beforeend"><div class="w-full flex flex-col items-center mb-4"><div class="w-full max-w-2xl text-sm px-2">%s</div></div></div>`,
 		inner,
 	)
 }
@@ -919,4 +910,3 @@ func detectMimeType(filename string) string {
 	}
 	return "application/octet-stream"
 }
-
