@@ -491,7 +491,7 @@ func assistantFunctionCallHTML(fc *genai.FunctionCall) string {
 		title = fmt.Sprintf("Function call: %s", html.EscapeString(fc.Name))
 	}
 	fmt.Fprintf(&b, `<details class="collapse text-sm w-fit">`+
-		`<summary class="collapse-title font-medium cursor-pointer p-0">%s</summary>`+
+		`<summary class="text-xs text-gray-300 cursor-pointer p-0">%s</summary>`+
 		`<div class="collapse-content p-3 pt-0 overflow-x-auto">`+
 		`<div class="assistant-part assistant-part-fn-call text-sm space-y-2 mt-2">`, title)
 	if fc.ID != "" {
@@ -557,10 +557,10 @@ func assistantFunctionResponseHTML(fr *genai.FunctionResponse) string {
 	if fr.Name != "" {
 		title = fmt.Sprintf("Function response: %s", html.EscapeString(fr.Name))
 	}
-	b.WriteString(fmt.Sprintf(`<details class="collapse collapse-arrow bg-base-200 border border-base-300 rounded-lg text-sm max-w-full my-2">`+
-		`<summary class="collapse-title font-medium cursor-pointer pr-12">%s</summary>`+
+	fmt.Fprintf(&b, `<details class="collapse text-sm max-w-full my-2">`+
+		`<summary class="text-xs text-gray-300 cursor-pointer p-0">%s</summary>`+
 		`<div class="collapse-content p-3 pt-0 overflow-x-auto">`+
-		`<div class="assistant-part assistant-part-fn-resp text-sm space-y-2 mt-2">`, title))
+		`<div class="assistant-part assistant-part-fn-resp text-sm space-y-2 mt-2">`, title)
 	if fr.ID != "" {
 		b.WriteString(`<div class="mb-1 text-xs opacity-70">Call ID <code>`)
 		b.WriteString(html.EscapeString(fr.ID))

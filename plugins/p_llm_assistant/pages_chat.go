@@ -372,7 +372,7 @@ func assistantBubbleToolHTML(inner string) Node {
 		Class("w-full flex flex-col"),
 		El("details",
 			Class("collapse text-sm w-fit"),
-			El("summary", Class("collapse-title font-medium cursor-pointer p-0"), Text("Tool Execution")),
+			El("summary", Class("text-xs text-gray-300 cursor-pointer p-0"), Text("Tool Execution")),
 			Div(Class("collapse-content p-3 pt-0 overflow-x-auto"), Raw(inner)),
 		),
 	)
