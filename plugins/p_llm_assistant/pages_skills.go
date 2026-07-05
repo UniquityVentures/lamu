@@ -124,7 +124,7 @@ func registerSkillsPages() {
 						Children: []components.PageInterface{
 							&components.FieldTitle{Getter: getters.Key[string]("$in.Name")},
 							&components.FieldSubtitle{Getter: getters.Key[string]("$in.Description")},
-							&components.ButtonLink{
+							&components.ButtonDownload{
 								Label: "Export Skill",
 								Icon:  "arrow-down-tray",
 								Link: lamu.RoutePath("llm_assistant.SkillsExportRoute", map[string]getters.Getter[any]{
