@@ -32,12 +32,12 @@ const (
 )
 
 var AssistantAppConfig = struct {
-	ChatMaxOutputTokens int
-	AssistantToolRounds int
-	IntelSearchLimitCap int
+	ChatMaxOutputTokens        int
+	AssistantToolRounds        int
+	IntelSearchLimitCap        int
 	GoogleSearchResultLimitCap int
 }{
-	ChatMaxOutputTokens:        1536,
+	ChatMaxOutputTokens:        4096,
 	AssistantToolRounds:        14,
 	IntelSearchLimitCap:        20,
 	GoogleSearchResultLimitCap: defaultGoogleSearchResultLimitCap,

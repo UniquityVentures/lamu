@@ -113,6 +113,10 @@ func init() {
 				Key:        getters.Static("skill"),
 				SuccessURL: lamu.RoutePath("llm_assistant.SkillsListRoute", nil),
 			}))
+
+	registerPluginView("llm_assistant.SkillsImportView",
+		lamu.GetPageView("llm_assistant.SkillsImportPage").
+			WithLayer("p_users.auth", p_users.AuthenticationLayer{}))
 }
 
 func handleNewSession(w http.ResponseWriter, r *http.Request) {

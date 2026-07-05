@@ -70,4 +70,9 @@ func init() {
 		Path:    AppUrl + "skills/{id}/export/",
 		Handler: p_users.RequireAuth(http.HandlerFunc(handleSkillExport)),
 	})
+
+	registerPluginRoute("llm_assistant.SkillsImportRoute", lamu.Route{
+		Path:    AppUrl + "skills/import/",
+		Handler: p_users.RequireAuth(http.HandlerFunc(handleSkillImportRoute)),
+	})
 }

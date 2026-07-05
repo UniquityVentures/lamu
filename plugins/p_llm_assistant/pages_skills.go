@@ -88,6 +88,14 @@ func registerSkillsPages() {
 						Icon:    "plus",
 						Classes: "btn-square btn-outline btn-sm",
 					},
+					&components.ButtonModalForm{
+						Icon:        "arrow-up-on-square",
+						Name:        getters.Static("llm_assistant.SkillsImportPage"),
+						Url:         lamu.RoutePath("llm_assistant.SkillsImportRoute", nil),
+						FormPostURL: lamu.RoutePath("llm_assistant.SkillsImportRoute", nil),
+						ModalUID:    "skill-import-modal",
+						Classes:     "btn-square btn-outline btn-sm",
+					},
 				},
 				RowAttr: getters.RowAttrNavigate(lamu.RoutePath("llm_assistant.SkillsDetailRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("$row.ID"))})),
 				Columns: []components.TableColumn{
@@ -235,6 +243,40 @@ func registerSkillsPages() {
 				Title:   "Confirm Deletion",
 				Message: "Are you sure you want to delete this skill?",
 				Attr:    getters.FormBubbling(getters.Key[string]("$get.name")),
+			},
+		},
+	})
+
+	// Import Page Modal
+	registerPluginPage("llm_assistant.SkillsImportPage", &components.Modal{
+		UID: "skill-import-modal",
+		Children: []components.PageInterface{
+			&components.FormListenBoostedPost{
+				Name:      getters.Static("llm_assistant.SkillsImportPage"),
+				ActionURL: lamu.RoutePath("llm_assistant.SkillsImportRoute", nil),
+				Children: []components.PageInterface{
+					&components.FormComponent[any]{
+						Attr:     getters.FormBubbling(getters.Static("llm_assistant.SkillsImportPage")),
+						Title:    "Import Skill",
+						Subtitle: "Upload a skill zip file to import it",
+						ChildrenInput: []components.PageInterface{
+							&components.InputFile{
+								Label:    "Skill Zip File",
+								Name:     "File",
+								Required: true,
+								Accept:   ".zip",
+							},
+						},
+						ChildrenAction: []components.PageInterface{
+							&components.ContainerRow{
+								Classes: "flex justify-end gap-2 mt-2",
+								Children: []components.PageInterface{
+									&components.ButtonSubmit{Label: "Import", Classes: "btn-primary"},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	})
