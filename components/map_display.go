@@ -314,14 +314,13 @@ body[data-theme="dark"] #` + mapElID + `.maplibregl-map .mapdisplay-layer-toolba
   var skipAutoFitBounds = ` + string(skipAutoFitBoundsBytes) + `;
   var mapMarkerIconSizeDefault = ` + string(markerIconSizeDefaultBytes) + `;
   var mapElId = "mapdisplay-" + suffix + "-map";
+  var _currentScript = document.currentScript;
+  var _scriptSiblingEl = _currentScript ? _currentScript.previousElementSibling : null;
 
   function mapDisplayRunInit() {
-  var mapEl = document.getElementById(mapElId);
+  var mapEl = _scriptSiblingEl || document.getElementById(mapElId);
   if (!mapEl) { return; }
   if (mapEl.classList.contains("maplibregl-map")) { return; }
-  if (window["mapDisplay_" + suffix] && typeof window["mapDisplay_" + suffix].destroy === "function") {
-    try { window["mapDisplay_" + suffix].destroy(); } catch (e) {}
-  }
   if (typeof maplibregl === "undefined") {
     mapDisplayRunInit._n = (mapDisplayRunInit._n || 0) + 1;
     if (mapDisplayRunInit._n > 120) { return; }
@@ -1803,7 +1802,7 @@ body[data-theme="dark"] #` + mapElID + `.maplibregl-map .mapdisplay-layer-toolba
   };
   window.addEventListener("storage", storageListener);
 
-  window["mapDisplay_" + suffix] = {
+  var _instance = {
     start: function () {
       shuttingDown = false;
       connectWebSocket();
@@ -1828,6 +1827,7 @@ body[data-theme="dark"] #` + mapElID + `.maplibregl-map .mapdisplay-layer-toolba
       clearReconnectTimer();
       if (boundsDebounceTimer) {
         try { clearTimeout(boundsDebounceTimer); } catch (e) {}
+        boundsDebounceTimer = 0;
       }
       if (ws) {
         ws.onopen = ws.onmessage = ws.onerror = ws.onclose = null;
@@ -1840,10 +1840,24 @@ body[data-theme="dark"] #` + mapElID + `.maplibregl-map .mapdisplay-layer-toolba
         try { observer.disconnect(); } catch (e) {}
       }
       if (map) {
+        try { removeDynamicLayers(); } catch (e) {}
+        try {
+          map.off("moveend", scheduleSendViewportBounds);
+          map.off("zoomend", scheduleSendViewportBounds);
+          map.off("rotateend", scheduleSendViewportBounds);
+          map.off("pitchend", scheduleSendViewportBounds);
+          map.off("resize", scheduleSendViewportBounds);
+        } catch (e) {}
         try { map.remove(); } catch (e) {}
+        map = null;
+      }
+      if (window["mapDisplay_" + suffix] === _instance) {
+        window["mapDisplay_" + suffix] = null;
       }
     }
   };
+  window["mapDisplay_" + suffix] = _instance;
+  mapEl.mapDisplayInstance = _instance;
 
   map.on("load", function () {
     try {
@@ -1878,7 +1892,12 @@ body[data-theme="dark"] #` + mapElID + `.maplibregl-map .mapdisplay-layer-toolba
 
 	return Group([]Node{
 		StyleEl(Raw(mapCtrlCSS)),
-		Div(ID(mapElID), Class(classes)),
+		Div(
+			ID(mapElID),
+			Class(classes),
+			Attr("x-data", "{}"),
+			Attr("x-on:destroy", "if ($el.mapDisplayInstance) { $el.mapDisplayInstance.destroy(); }"),
+		),
 		Script(Raw(initJS)),
 	})
 }
