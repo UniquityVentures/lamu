@@ -22,11 +22,11 @@ import (
 //
 //	func main() {
 //		config := lamu.LamuConfig{
-//			Port: 8080,
-//			DB:   lamu.DBConfig{Driver: "postgres", DSN: "postgresql://..."},
+//			DBType:  lamu.DBTypePostgres,
+//			Address: ":8080",
 //		}
 //		plugins := []registry.Pair[string, lamu.Plugin]{
-//			registry.NewPair("dashboard", p_dashboard.New()),
+//			p_dashboard.GetPlugin(),
 //		}
 //		if err := lamu.Start(config, plugins); err != nil {
 //			log.Fatal(err)

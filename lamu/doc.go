@@ -20,8 +20,8 @@
 //	func main() {
 //		// 1. Register the list of active plugins to load into the application kernel.
 //		plugins := []registry.Pair[string, lamu.Plugin]{
-//			registry.NewPair("dashboard", p_dashboard.GetPlugin()),
-//			registry.NewPair("users", p_users.GetPlugin()),
+//			p_dashboard.GetPlugin(),
+//			p_users.GetPlugin(),
 //		}
 //
 //		// 2. Load database settings, server addresses, and plugin parameters from config.toml.
@@ -43,7 +43,7 @@
 //
 // # Minimal Plugin
 //
-// Plugins are discrete packages exposing a GetPlugin function returning a [Plugin] structure:
+// Plugins are discrete packages exposing a GetPlugin function returning a [registry.Pair] of plugin name and [Plugin]:
 //
 //	package myplugin
 //
@@ -51,17 +51,18 @@
 //		"net/url"
 //
 //		"github.com/UniquityVentures/lamu/lamu"
+//		"github.com/UniquityVentures/lamu/registry"
 //	)
 //
-//	func GetPlugin() lamu.Plugin {
-//		return lamu.Plugin{
+//	func GetPlugin() registry.Pair[string, lamu.Plugin] {
+//		return registry.NewPair("myplugin", lamu.Plugin{
 //			Type:        lamu.PluginTypeApp,
 //			VerboseName: "Inventory Manager",
 //			Icon:        "box",
 //			URL: &url.URL{
 //				Path: "/inventory/",
 //			},
-//		}
+//		})
 //	}
 //
 // Explanation:
@@ -94,8 +95,8 @@
 //		return html.Div(html.H1(Text("Hello, World!")))
 //	}
 //
-//	func GetPlugin() lamu.Plugin {
-//		return lamu.Plugin{
+//	func GetPlugin() registry.Pair[string, lamu.Plugin] {
+//		return registry.NewPair("hello_plugin", lamu.Plugin{
 //			Type:        lamu.PluginTypeApp,
 //			VerboseName: "Hello Plugin",
 //			Pages: lamu.PluginStages(func() lamu.PluginFeatures[components.PageInterface] {
@@ -115,7 +116,7 @@
 //					},
 //				}
 //			}),
-//		}
+//		})
 //	}
 //
 // Explanation:
@@ -147,11 +148,11 @@
 //		})
 //	}
 //
-//	func GetPlugin() lamu.Plugin {
+//	func GetPlugin() registry.Pair[string, lamu.Plugin] {
 //		myView := lamu.GetPageView("myplugin.hello").
 //			WithLayer("logger", LogLayer{})
 //
-//		return lamu.Plugin{
+//		return registry.NewPair("views_plugin", lamu.Plugin{
 //			Type:        lamu.PluginTypeApp,
 //			VerboseName: "Views Plugin",
 //			Views: lamu.PluginStages(func() lamu.PluginFeatures[*views.View] {
@@ -161,7 +162,7 @@
 //					},
 //				}
 //			}),
-//		}
+//		})
 //	}
 //
 // Other available view layers:
@@ -184,8 +185,8 @@
 //		"github.com/UniquityVentures/lamu/registry"
 //	)
 //
-//	func GetPlugin() lamu.Plugin {
-//		return lamu.Plugin{
+//	func GetPlugin() registry.Pair[string, lamu.Plugin] {
+//		return registry.NewPair("dashboard_decorator", lamu.Plugin{
 //			Type:        lamu.PluginTypeAddon,
 //			VerboseName: "Dashboard Decorator",
 //			Pages: lamu.PluginStages(func() lamu.PluginFeatures[components.PageInterface] {
@@ -202,7 +203,7 @@
 //					},
 //				}
 //			}),
-//		}
+//		})
 //	}
 //
 // Purity and Idempotency Rules:

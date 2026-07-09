@@ -66,12 +66,17 @@ func LoadConfigFromFile(path string, plugins []registry.Pair[string, Plugin]) (L
 
 	resolvedPath := path
 	if !filepath.IsAbs(resolvedPath) {
-		exe, err := os.Executable()
-		if err != nil {
-			slog.Error("failed resolving executable path for config file", "err", err, "configPath", path)
-			return config, err
+		if _, err := os.Stat(resolvedPath); err == nil {
+			// File exists in the current working directory, use it directly.
+		} else {
+			// Fallback to the directory of the binary.
+			exe, err := os.Executable()
+			if err != nil {
+				slog.Error("failed resolving executable path for config file", "err", err, "configPath", path)
+				return config, err
+			}
+			resolvedPath = filepath.Join(filepath.Dir(exe), resolvedPath)
 		}
-		resolvedPath = filepath.Join(filepath.Dir(exe), resolvedPath)
 	}
 
 	md, err := toml.DecodeFile(resolvedPath, &config)

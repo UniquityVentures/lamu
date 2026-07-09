@@ -72,8 +72,8 @@ import (
 func main() {
 	// 1. Register the list of active plugins to load into the application kernel.
 	plugins := []registry.Pair[string, lamu.Plugin]{
-		registry.NewPair("dashboard", p_dashboard.GetPlugin()),
-		registry.NewPair("users", p_users.GetPlugin()),
+		p_dashboard.GetPlugin(),
+		p_users.GetPlugin(),
 	}
 	// Load database settings, server addresses, and plugin parameters from config.toml.
 	config, err := lamu.LoadConfigFromFile("config.toml", plugins)
