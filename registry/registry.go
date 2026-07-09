@@ -101,6 +101,12 @@ type Pair[K comparable, V any] struct {
 	Value V
 }
 
+func NewPair[K comparable, V any](k K, v V) Pair[K, V] {
+	return Pair[K, V]{
+		Key: k, Value: v,
+	}
+}
+
 // PairsFromMap converts a map into a stable slice of pairs sorted by key.
 func PairsFromMap[K cmp.Ordered, V any](m map[K]V) []Pair[K, V] {
 	pairs := make([]Pair[K, V], 0, len(m))
