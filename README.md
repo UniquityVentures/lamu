@@ -8,13 +8,59 @@ For detailed package documentation, check out the [Lamu Go Reference](https://pk
 
 ## Quickstart
 
-Initialize a Lamu application by registering active plugins, loading configuration values from a TOML file, and executing the CLI entrypoint:
+Create a empty go project named lamu_test
+
+```bash
+mkdir lamu_test
+go mod init lamu_test
+```
+
+Create an empty main.go, and an empty config.toml file
+
+```bash
+touch main.go
+```
+
+To configure for a basic sqlite deployment, put the following in config.toml:
+```toml
+Debug = true
+DBType = "Sqlite"
+Address = ":42069"
+
+[SqliteConfig]
+  DSN = "lamu_database.db"
+
+[plugins.p_pwa]
+  # If set, /serviceworker.js will serve this file. If empty, p_pwa serves a minimal default.
+  serviceWorkerPath = ""
+
+  # If set, /offline will render this view key. If empty, p_pwa serves a minimal offline HTML page.
+  offlineViewName = ""
+
+  staticDir = "./pwa_static/"
+
+  PWA_APP_NAME = "Lamu Test"
+  PWA_APP_DESCRIPTION = "Test app for lamu"
+  PWA_APP_THEME_COLOR = "#0A0302"
+  PWA_APP_BACKGROUND_COLOR = "#ffffff"
+  PWA_APP_DISPLAY = "standalone"
+  PWA_APP_SCOPE = "/"
+  PWA_APP_ORIENTATION = "any"
+  PWA_APP_START_URL = "/"
+  PWA_APP_STATUS_BAR_COLOR = "default"
+  PWA_APP_DIR = "ltr"
+  PWA_APP_LANG = "en-US"
+
+```
+
+To initialize a Lamu application by registering active plugins, loading configuration values from a TOML file, and executing the CLI entrypoint, put the following in main.go
 
 ```go
 package main
 
 import (
 	"log"
+	"gorm.io/driver/sqlite"
 
 	"github.com/UniquityVentures/lamu/lamu"
 	"github.com/UniquityVentures/lamu/plugins/p_dashboard"
@@ -28,11 +74,10 @@ func main() {
 		registry.NewPair("dashboard", p_dashboard.GetPlugin()),
 		registry.NewPair("users", p_users.GetPlugin()),
 	}
-
-	// 2. Load database settings, server addresses, and plugin parameters from config.toml.
+	// Load database settings, server addresses, and plugin parameters from config.toml.
 	config, err := lamu.LoadConfigFromFile("config.toml", plugins)
 	if err != nil {
-		log.Fatalf("failed loading configuration file: %v", err)
+     	log.Fatalf("failed loading configuration file: %v", err)
 	}
 
 	// 3. Build global registries and run the Cobra CLI bootstrapper.
