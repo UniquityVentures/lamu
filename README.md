@@ -62,7 +62,6 @@ package main
 
 import (
 	"log"
-	"gorm.io/driver/sqlite"
 
 	"github.com/UniquityVentures/lamu/lamu"
 	"github.com/UniquityVentures/lamu/plugins/p_dashboard"
