@@ -87,6 +87,13 @@ func main() {
 }
 ```
 
+To run, 
+
+```bash
+go mod tidy
+go run main.go
+```
+
 ## Features
 
 - **Plugin Registries**: Package database models, pages, API routes, and configs inside modular plugin boundaries.
