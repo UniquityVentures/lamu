@@ -47,7 +47,7 @@ func StartServer(config LamuConfig) error {
 		return http.Serve(ln, router)
 	}
 	slog.Info("Listening", "TCP", config.Address)
-	slog.Info("Listening", "https", "https://"+config.Address)
+	slog.Info("Listening", "https", " https://"+config.Address)
 
 	return http.ListenAndServe(config.Address, router)
 }
