@@ -8,13 +8,75 @@ import (
 	"gorm.io/gorm"
 )
 
+// RegistryGenerator represents the global immutable registry tracking database seed generators.
 var RegistryGenerator *registry.ImmutableRegistry[Generator] = &registry.ImmutableRegistry[Generator]{}
 
+// Generator defines creation and deletion functions executed during database seeding/data generating commands.
+//
+// Use Cases:
+//   - Seeding development or test databases with mock tables data (e.g. creating dummy administrator accounts, catalog samples).
+//
+// Example Definition:
+//
+//	var ProductGen = Generator{
+//		Create: func(db *gorm.DB) error {
+//			return db.Create(&Product{Name: "Mock Item"}).Error
+//		},
+//		Remove: func(db *gorm.DB) error {
+//			return db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&Product{}).Error
+//		},
+//	}
+//
+// Example Registration:
+//
+//	// In your lamu.Plugin setup:
+//	lamu.Plugin{
+//		Generators: lamu.PluginStages(func() PluginFeatures[Generator] {
+//			return PluginFeatures[Generator]{
+//				Entries: []registry.Pair[string, Generator]{
+//					registry.NewPair("products_seeder", ProductGen),
+//				},
+//			}
+//		}),
+//	}
+//
+// Example Patch:
+//
+//	// Register a patch to chain or modify database seeders from another plugin:
+//	lamu.Plugin{
+//		Generators: lamu.PluginStages(func() PluginFeatures[Generator] {
+//			return PluginFeatures[Generator]{
+//				Patches: []registry.Pair[string, func(Generator) Generator]{
+//					registry.NewPair("products_seeder", func(existing Generator) Generator {
+//						return Generator{
+//							Create: func(db *gorm.DB) error {
+//								if err := existing.Create(db); err != nil {
+//									return err
+//								}
+//								// Add extra seeder child data:
+//								return db.Create(&Tag{Name: "Hot"}).Error
+//							},
+//							Remove: existing.Remove,
+//						}
+//					}),
+//				},
+//			}
+//		}),
+//	}
+//
+// Example Retrieval:
+//
+//	gen, ok := RegistryGenerator.Get("products_seeder")
 type Generator struct {
+	// Create populates database tables with mock data records.
 	Create func(*gorm.DB) error
+	// Remove cleans up database tables to undo mock population.
 	Remove func(*gorm.DB) error
 }
 
+// RunGenerators executes all registered seed generators.
+// It runs deletion (Remove) in reverse order of GeneratorOrder to satisfy foreign key constraints,
+// and creation (Create) in forward order of GeneratorOrder so dependent entities are populated correctly.
 func RunGenerators(config LamuConfig) {
 	db, err := GetDbConn(config)
 	if err != nil {

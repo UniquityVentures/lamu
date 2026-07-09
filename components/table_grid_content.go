@@ -8,13 +8,31 @@ import (
 	g_html "maragu.dev/gomponents/html"
 )
 
+// TableGridContent represents a sub-component layout that renders list data rows as a grid of responsive cards.
+// It maps the first column value as the card header title and displays subsequent column fields as small labeled text blocks inside the card block.
+//
+// Use Cases:
+//   - Rendering resource collections in card grid views on responsive layouts, suitable for products or user profile items.
+//
+// Example:
+//
+//	 &components.TableGridContent[Product]{
+//	     Columns: productCols,
+//	     Data:    productDataGetter,
+//	     RowAttr: getters.RowAttrNavigate(lamu.RoutePath("products.DetailRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("$row.ID"))})),
+//	 }
 type TableGridContent[T any] struct {
+	// Page embeds common component properties like Key and Roles.
 	Page
+	// Columns represents the slice of TableColumn configurations mapping data rows.
 	Columns []TableColumn
+	// Data represents the dynamic Getter retrieving the paginated ObjectList payload.
 	Data    getters.Getter[ObjectList[T]]
+	// RowAttr represents the dynamic getter returning TR/card attribute nodes.
 	RowAttr getters.Getter[Node]
 }
 
+// Build compiles the TableGridContent component into a grid of card blocks.
 func (e TableGridContent[T]) Build(ctx context.Context) Node {
 	var data ObjectList[T]
 	if e.Data != nil {
@@ -87,14 +105,17 @@ func (e TableGridContent[T]) Build(ctx context.Context) Node {
 	)
 }
 
+// GetKey returns the unique key identifier for this TableGridContent.
 func (e TableGridContent[T]) GetKey() string {
 	return e.Key
 }
 
+// GetRoles returns the authorized roles required to view this TableGridContent.
 func (e TableGridContent[T]) GetRoles() []string {
 	return e.Roles
 }
 
+// GetChildren returns the slice of nested sub-components.
 func (e TableGridContent[T]) GetChildren() []PageInterface {
 	children := []PageInterface{}
 	for _, col := range e.Columns {
@@ -103,6 +124,7 @@ func (e TableGridContent[T]) GetChildren() []PageInterface {
 	return children
 }
 
+// SetChildren replaces the slice of nested sub-components.
 func (e *TableGridContent[T]) SetChildren(children []PageInterface) {
 	offset := 0
 	for i := range e.Columns {

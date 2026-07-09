@@ -10,20 +10,44 @@ import (
 	"maragu.dev/gomponents/html"
 )
 
+// RegistryTopbar holds registered sub-components (typically navigation menu items or user profile widgets)
+// that are rendered dynamically within the top navigation bar.
 var RegistryTopbar = registry.NewRegistry[PageInterface]()
 
+// SidebarItem defines the icon and sub-component payload for drawer sections inside RegistryRightSidebar.
 type SidebarItem struct {
+	// Icon represents the SVG icon name representing this sidebar tab button.
 	Icon    string
+	// Content represents the child sub-component structure rendered in the sidebar pane.
 	Content PageInterface
 }
 
+// RegistryRightSidebar holds registered utility items to display in the layout's collapsible right drawer.
 var RegistryRightSidebar = registry.NewRegistry[SidebarItem]()
 
+// LayoutTopbar represents a responsive page shell featuring a top navigation bar and a collapsible, resizable right sidebar drawer.
+// Layout components are special structural nodes in Lamu establishing page wrappers. LayoutTopbar populates its navbar navigation items
+// dynamically from RegistryTopbar, and populates right utility drawers dynamically from RegistryRightSidebar.
+// The right sidebar features Alpine.js-driven click resizing, tab switching, and localStorage layout width persistence.
+//
+// Use Cases:
+//   - Framing primary applications that feature persistent top menu navigations and secondary utility side panels (e.g., chat drawers, settings tabs, audit logs).
+//
+// Example:
+//
+//	 &components.LayoutTopbar{
+//	     Children: []components.PageInterface{
+//	         &components.FieldTitle{Title: "Main Dashboard"},
+//	     },
+//	 }
 type LayoutTopbar struct {
+	// Page embeds common component properties like Key and Roles.
 	Page
+	// Children represents the slice of sub-components rendered in the main layout viewport canvas.
 	Children []PageInterface
 }
 
+// Build compiles the LayoutTopbar component into a navbar and side container structure.
 func (e LayoutTopbar) Build(ctx context.Context) gomponents.Node {
 	topbarItems := gomponents.Group{}
 
@@ -226,18 +250,22 @@ func (e LayoutTopbar) Build(ctx context.Context) gomponents.Node {
 	return html.Div(rootAttrs...)
 }
 
+// GetKey returns the unique key identifier for this LayoutTopbar component.
 func (e LayoutTopbar) GetKey() string {
 	return e.Key
 }
 
+// GetRoles returns the authorized roles required to view this LayoutTopbar.
 func (e LayoutTopbar) GetRoles() []string {
 	return e.Roles
 }
 
+// GetChildren returns the slice of nested sub-components.
 func (e LayoutTopbar) GetChildren() []PageInterface {
 	return e.Children
 }
 
+// SetChildren replaces the slice of nested sub-components.
 func (e *LayoutTopbar) SetChildren(children []PageInterface) {
 	e.Children = children
 }

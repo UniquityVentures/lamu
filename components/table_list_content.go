@@ -11,13 +11,31 @@ import (
 	g_html "maragu.dev/gomponents/html"
 )
 
+// TableListContent represents a sub-component layout rendering query lists in standard HTML tabular tables.
+// It sets up table headers with clickable sort cycles (ASC -> DESC -> none) containing sorting indicator marks (▲/▼), and renders zebra table row lines.
+//
+// Use Cases:
+//   - Displaying large data sets in standard table layouts suited for widescreen desktop dashboards.
+//
+// Example:
+//
+//	 &components.TableListContent[User]{
+//	     Columns: userCols,
+//	     Data:    userDataGetter,
+//	     RowAttr: getters.RowAttrNavigate(lamu.RoutePath("users.DetailRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("$row.ID"))})),
+//	 }
 type TableListContent[T any] struct {
+	// Page embeds common component properties like Key and Roles.
 	Page
+	// Columns represents the slice of TableColumn configurations.
 	Columns []TableColumn
+	// Data represents the dynamic Getter retrieving the paginated ObjectList payload.
 	Data    getters.Getter[ObjectList[T]]
+	// RowAttr represents the dynamic getter returning TR/card attribute nodes.
 	RowAttr getters.Getter[Node]
 }
 
+// Build compiles the TableListContent component into tabular lists featuring sorting headers and zebra tr wrappers.
 func (e TableListContent[T]) Build(ctx context.Context) Node {
 	var data ObjectList[T]
 	if e.Data != nil {
@@ -102,14 +120,17 @@ func (e TableListContent[T]) Build(ctx context.Context) Node {
 	)
 }
 
+// GetKey returns the unique key identifier for this TableListContent.
 func (e TableListContent[T]) GetKey() string {
 	return e.Key
 }
 
+// GetRoles returns the authorized roles required to view this TableListContent.
 func (e TableListContent[T]) GetRoles() []string {
 	return e.Roles
 }
 
+// GetChildren returns the slice of nested sub-components.
 func (e TableListContent[T]) GetChildren() []PageInterface {
 	children := []PageInterface{}
 	for _, col := range e.Columns {
@@ -118,6 +139,7 @@ func (e TableListContent[T]) GetChildren() []PageInterface {
 	return children
 }
 
+// SetChildren replaces the slice of nested sub-components.
 func (e *TableListContent[T]) SetChildren(children []PageInterface) {
 	offset := 0
 	for i := range e.Columns {

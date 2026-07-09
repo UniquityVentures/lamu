@@ -9,18 +9,34 @@ import (
 	"github.com/UniquityVentures/lamu/getters"
 )
 
-// LayerTableToggleColumns parses a URL query parameter (name from QueryParam getter) as a
-// comma-separated list of [components.TableColumn.Name] values, builds map[string]bool, and stores it on
-// context under the key from ContextKey getter. If the query parameter is absent, context is unchanged so
-// [components.DataTable] getters can return (nil, nil) and show every column.
+// LayerTableToggleColumns parses a URL query parameter carrying a list of active columns,
+// builds a boolean map of visible columns, and stores it in the request context under ContextKey.
+// Downstream data tables fetch this map (e.g., using [components.GetterEnabledColumnsFromContext]) to dynamically show or hide fields.
 //
-// When the parameter is present with an empty value (e.g. cols=), the stored map is empty and every
-// named column is hidden for tables using [components.GetterEnabledColumnsFromContext].
+// Use Cases:
+//   - Supporting customizable table layouts where users can check/uncheck columns via toolbar toggles.
+//
+// Example:
+//
+//	views.View{
+//	    Layers: []views.Layer{
+//	        views.LayerTableToggleColumns{
+//	            QueryParam: getters.Static("cols"),
+//	            ContextKey: getters.Static("visibleColumnsMap"),
+//	        },
+//	        views.LayerList[User]{
+//	            Key: getters.Static("$users"),
+//	        },
+//	    },
+//	}
 type LayerTableToggleColumns struct {
+	// QueryParam represents the Getter resolving to the URL query parameter key (e.g. "cols").
 	QueryParam getters.Getter[string]
+	// ContextKey represents the Getter resolving to the request context key under which the visibility map is saved.
 	ContextKey getters.Getter[string]
 }
 
+// Next wraps the downstream HTTP request handlers executing table columns parsing.
 func (m LayerTableToggleColumns) Next(_ View, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

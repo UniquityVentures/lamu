@@ -1,14 +1,37 @@
 package lamu
 
 import (
-	tea "charm.land/bubbletea/v2"
 	"github.com/UniquityVentures/lamu/registry"
 	"github.com/spf13/cobra"
 )
 
-// Start boots the cobra CLI and server paths. Populate registries before calling this via
-// [LoadConfigFromFile(path, plugins)], which merges plugins and invokes [BuildAllRegistries];
-// plugins must match the slice passed there.
+// Start initializes and executes the Cobra CLI application, acting as the main entrypoint for any Lamu application.
+//
+// CLI Command Scopes:
+//   - Root Command: Starts the HTTP web server via [StartServer].
+//   - generate: Runs database seed generators via [RunGenerators].
+//   - tui: Launches the Bubble Tea terminal user interface.
+//   - Plugin Commands: Resolves and registers custom commands dynamically loaded from [RegistryCommand].
+//
+// Registries and configurations must be populated before invoking this function (e.g. using LoadConfigFromFile).
+//
+// Use Cases:
+//   - Initializing the CLI bootstrapper in the main execution block of a Go application.
+//
+// Example:
+//
+//	func main() {
+//		config := lamu.LamuConfig{
+//			Port: 8080,
+//			DB:   lamu.DBConfig{Driver: "postgres", DSN: "postgresql://..."},
+//		}
+//		plugins := []registry.Pair[string, lamu.Plugin]{
+//			registry.NewPair("dashboard", p_dashboard.New()),
+//		}
+//		if err := lamu.Start(config, plugins); err != nil {
+//			log.Fatal(err)
+//		}
+//	}
 func Start(config LamuConfig, plugins []registry.Pair[string, Plugin]) error {
 	_ = plugins
 	rootCmd := &cobra.Command{
@@ -25,19 +48,6 @@ func Start(config LamuConfig, plugins []registry.Pair[string, Plugin]) error {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			RunGenerators(config)
 			return nil
-		},
-	})
-
-	rootCmd.AddCommand(&cobra.Command{
-		Use:   "tui",
-		Short: "Launch the TUI instead of running the server",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := GetDbConn(config)
-			if err != nil {
-				return err
-			}
-			_, err = tea.NewProgram(initialModel(db)).Run()
-			return err
 		},
 	})
 

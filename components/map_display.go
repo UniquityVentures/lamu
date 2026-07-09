@@ -21,15 +21,20 @@ const (
 
 var mapDisplayIDSanitize = regexp.MustCompile(`[^a-zA-Z0-9-]+`)
 
-// MapDisplayLibreHead loads MapLibre CSS and JS from unpkg. Include once per page
-// in the shell ExtraHead when using [MapDisplay].
+// MapDisplayLibreHead loads MapLibre CSS and JS script dependencies from unpkg.
+// It should be registered/included once per page in the shell ExtraHead metadata when using [MapDisplay].
 type MapDisplayLibreHead struct {
+	// Page embeds common component properties like Key and Roles.
 	Page
 }
 
+// GetKey returns the unique key identifier for this MapDisplayLibreHead.
 func (e *MapDisplayLibreHead) GetKey() string     { return e.Key }
+
+// GetRoles returns the authorized roles required to view this MapDisplayLibreHead.
 func (e *MapDisplayLibreHead) GetRoles() []string { return e.Roles }
 
+// Build compiles the MapDisplayLibreHead component into CDN stylesheet and script tags.
 func (e *MapDisplayLibreHead) Build(ctx context.Context) Node {
 	baseMapLibre := "https://unpkg.com/maplibre-gl@" + mapDisplayLibreCDNVersion + "/dist/"
 	baseCBORX := "https://unpkg.com/cbor-x@" + mapDisplayCBORXCDNVersion + "/dist/"
@@ -40,6 +45,7 @@ func (e *MapDisplayLibreHead) Build(ctx context.Context) Node {
 	})
 }
 
+// mapDisplayIDSuffix sanitizes pageKey strings to generate safe, valid DOM element ID suffixes.
 func mapDisplayIDSuffix(pageKey string) string {
 	s := strings.TrimSpace(pageKey)
 	if s == "" {
@@ -56,89 +62,43 @@ func mapDisplayIDSuffix(pageKey string) string {
 	return s
 }
 
-// MapDisplay renders a MapLibre map that opens a WebSocket at DataURL and streams marker payloads.
+// MapDisplay renders an interactive MapLibre map that opens a WebSocket to stream real-time marker payloads.
+// Payloads streamed over the WebSocket are gzip-compressed CBOR arrays representing marker objects.
 //
-// DataURL must be a WebSocket URL (ws: or wss:) or a path beginning with "/" (scheme and host
-// are taken from the current page: wss on https, ws on http).
+// Use Cases:
+//   - Plotting live vehicle telemetry coordinates, tracking physical deliveries, showing location hotspots, or rendering cluster maps.
 //
-// Wire format (both directions, binary WebSocket frames): gzip(RFC 1952) wrapping a CBOR body.
-// Frame payloads are capped at 1048576 bytes (1 MiB). Requires CompressionStream / DecompressionStream.
+// Example:
 //
-// Outbound (client → server): whenever the map viewport changes (pan, zoom, rotate, pitch,
-// or container resize), the client sends gzip-compressed CBOR:
-//
-//	{"type":"mapDisplayViewport","bounds":{"west":number,"south":number,"east":number,"north":number},"zoom":number}
-//
-// Longitude/latitude are in degrees from MapLibre’s current map.getBounds().
-// Sends only while the WebSocket is OPEN; debounced ~150ms across rapid events.
-//
-// Inbound (server → client): gzip-compressed CBOR array of marker objects (see element fields below).
-//
-// Decompressed CBOR array elements:
-//   - position (required): { "lat": number, "lng": number }
-//   - direction (optional): { "x", "y" } unit vector; if set, marker uses arrow icon,
-//     rotation follows (x,y) as east/north components, and that marker is not clustered.
-//   - velocity (optional): { "x", "y" } in degrees per second (x = d(lng)/dt, y = d(lat)/dt);
-//     omitted means zero velocity.
-//   - time (optional): Unix timestamp in seconds for position; if omitted, the message
-//     receive time is used as the reference time.
-//   - link (optional): if non-empty, clicking the marker navigates the page to this URL.
-//   - title (optional): short human-readable label (e.g. item title). When set with link,
-//     cluster popups use title as anchor text instead of showing the raw URL.
-//   - layer (optional): non-empty string groups markers into separate MapLibre sources with
-//     per-layer visibility toggles. If any marker in a payload has a non-empty layer, the map
-//     enters layered mode; markers without layer use logical id "_". Legacy single-cluster
-//     behavior applies when no marker has layer set. In layered mode, toggles are implemented
-//     as a MapLibre IControl (maplibregl-ctrl-group) on the map, not as separate page chrome.
-//   - color (optional): CSS color string (e.g. hex or rgb). Undirected markers use it for the
-//     circle fill; directed markers tint the arrow when no custom icon is set.
-//   - icon (optional): URL for a raster image (http(s), //, site-relative /..., or data:image/...).
-//     Loaded into the map style and drawn for that marker (undirected: symbol; directed: rotated symbol).
-//   - iconSize (optional): number; MapLibre symbol icon-size scale for that marker (typical range ~0.02–1.5).
-//     Omitted markers use [MapDisplay.MarkerIconSizeDefault] from the embedding page (see field doc).
-//
-// Extrapolated coordinates (seconds): responseTime = wall clock when a message was parsed;
-// tRef = time ?? responseTime; lng = position.lng + max(0, now - tRef) * (velocity?.x ?? 0);
-// lat = position.lat + max(0, now - tRef) * (velocity?.y ?? 0).
-//
-// Use [MapDisplayLibreHead] on the same page. Register with a stable Page.Key; use a pointer
-// when embedding in parents that need patchability.
+//	 &components.MapDisplay{
+//	     DataURL: lamu.RoutePath("vehicles.LiveCoordinates", nil),
+//	     Classes: "w-full h-[600px]",
+//	 }
 type MapDisplay struct {
+	// Page embeds common component properties like Key and Roles.
 	Page
-	// DataURL is the WebSocket URL (ws/wss or same-origin path like "/app/live/map").
+	// DataURL is the WebSocket endpoint URL (ws/wss or same-origin path like "/app/live/map") where marker updates are fetched.
 	DataURL getters.Getter[string]
-	// RefreshMS if non-nil: milliseconds to wait before reconnecting after the socket closes
-	// or errors. Zero uses a 2000ms default; negative disables auto-reconnect.
+	// RefreshMS represents the milliseconds to wait before reconnecting after the socket closes or errors (defaults to 2000ms).
 	RefreshMS getters.Getter[int64]
-	// Classes for the map container div (width/height). Empty uses a default tall map box.
+	// Classes represents additional CSS classes applied to the output HTML wrapper.
+	// (Discouraged: Use layout containers or theme styling instead of custom styling overrides).
 	Classes string
-	// DeferStart, when true, prevents MapDisplay from automatically opening its WebSocket
-	// when the MapLibre map finishes loading. Wrapper components can drive the lifecycle
-	// via the per-instance JS API exposed at window["mapDisplay_<suffix>"], which has:
-	//
-	//   start():                       open the WebSocket (idempotent on subsequent calls)
-	//   flyTo(lng, lat, zoom):         animate the map to the given center/zoom
-	//   unproject(x, y) -> {lng, lat}: convert container-relative pixel coordinates
-	//   isReady() -> bool:             true once the map has fired its "load" event
-	//
-	// The map element id is deterministic: "mapdisplay-<suffix>-map", where <suffix> is
-	// derived from this component's Page.Key. A "mapDisplayReady" CustomEvent is dispatched
-	// on document with detail.suffix once the map has loaded so wrappers can subscribe
-	// without polling.
+	// DeferStart specifies if MapDisplay should postpone starting the WebSocket connection until driven manually via the JS API.
 	DeferStart getters.Getter[bool]
-	// SkipAutoFitBounds, when true, disables the automatic fitBounds on first marker
-	// payloads (and after theme style reload). Use when the embedding page already
-	// positions the viewport (e.g. region picker + flyTo) so incoming worldwide points
-	// do not pull the camera back out.
+	// SkipAutoFitBounds specifies if automatic zoom fit-bounds behavior should be skipped when the first marker payload is received.
 	SkipAutoFitBounds getters.Getter[bool]
-	// MarkerIconSizeDefault, if non-nil, is the MapLibre icon-size scale used when a marker
-	// payload omits iconSize (typical range ~0.02–1.5). Values are clamped; nil uses 0.32.
+	// MarkerIconSizeDefault represents the default MapLibre scale multiplier applied to custom raster icons (defaults to 0.32).
 	MarkerIconSizeDefault getters.Getter[float64]
 }
 
+// GetKey returns the unique key identifier for this MapDisplay.
 func (e *MapDisplay) GetKey() string     { return e.Key }
+
+// GetRoles returns the authorized roles required to view this MapDisplay.
 func (e *MapDisplay) GetRoles() []string { return e.Roles }
 
+// Build compiles the MapDisplay component into MapLibre container Divs and dynamic script setup tags.
 func (e *MapDisplay) Build(ctx context.Context) Node {
 	dataURL := ""
 	if e.DataURL != nil {

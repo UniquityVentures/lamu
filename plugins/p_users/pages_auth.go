@@ -53,7 +53,7 @@ func pageEntriesAuth() []registry.Pair[string, components.PageInterface] {
 									},
 									&components.ButtonLink{
 										Page:    components.Page{Key: "p_users.AuthSignupLink"},
-										Label:   "Don't have an account? Sign up",
+										Label:   getters.Static("Don't have an account? Sign up"),
 										Link:    lamu.RoutePath("p_users.SignupRoute", nil),
 										Classes: "w-full",
 									},
@@ -115,7 +115,7 @@ func pageEntriesAuth() []registry.Pair[string, components.PageInterface] {
 								},
 								ChildrenAction: []components.PageInterface{
 									&components.ButtonSubmit{Label: "Sign Up", Classes: "w-full"},
-									&components.ButtonLink{Label: "Already have an account? Login", Link: lamu.RoutePath("p_users.LoginRoute", nil), Classes: "w-full"},
+									&components.ButtonLink{Label: getters.Static("Already have an account? Login"), Link: lamu.RoutePath("p_users.LoginRoute", nil), Classes: "w-full"},
 								},
 							},
 						},
@@ -129,10 +129,10 @@ func pageEntriesAuth() []registry.Pair[string, components.PageInterface] {
 					&components.FieldTitle{Getter: getters.Static("Welcome")},
 					&components.FieldSubtitle{Getter: getters.Static("Please log in or create an account to continue.")},
 					&components.ContainerColumn{Classes: "w-full mt-4 gap-2", Children: []components.PageInterface{
-						&components.ButtonLink{Label: "Login", Classes: "btn btn-primary text-white w-full", Link: lamu.RoutePath("p_users.LoginRoute", nil)},
+						&components.ButtonLink{Label: getters.Static("Login"), Classes: "btn btn-primary text-white w-full", Link: lamu.RoutePath("p_users.LoginRoute", nil)},
 						&components.ButtonLink{
 							Page:    components.Page{Key: "p_users.AuthSignupLink"},
-							Label:   "Sign Up",
+							Label:   getters.Static("Sign Up"),
 							Classes: "btn btn-outline w-full",
 							Link:    lamu.RoutePath("p_users.SignupRoute", nil),
 						},

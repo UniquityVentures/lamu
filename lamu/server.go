@@ -9,6 +9,17 @@ import (
 	_ "gorm.io/driver/sqlite"
 )
 
+// StartServer compiles global middleware layers, configures CORS/CrossOrigin protection, and listens for HTTP requests.
+// It supports binding to standard TCP socket addresses (config.Address) or Unix Domain Sockets (config.UDS).
+//
+// Use Cases:
+//   - Initializing the primary web server listener block during application startup.
+//
+// Example:
+//
+//	if err := lamu.StartServer(config); err != nil {
+//		log.Fatal(err)
+//	}
 func StartServer(config LamuConfig) error {
 	// Applying all layers
 	layers := *RegistryLayer.AllStable()

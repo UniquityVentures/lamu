@@ -10,18 +10,44 @@ import (
 	. "maragu.dev/gomponents/html"
 )
 
+// Timeline represents an interactive vertical event timeline listing component.
+// It displays a chronological list of activities, messages, or changes mapped from dynamic Getter payloads,
+// featuring item onClick navigations, optional filter menus, create action triggers, and vertical connector lines.
+//
+// Use Cases:
+//   - Showing transactional histories, audit trials, message feeds, or workflow timeline charts.
+//
+// Example:
+//
+//	 &components.Timeline[Event]{
+//	     Title:     "Activity Log",
+//	     Data:      eventDataGetter,
+//	     OnClick:   getters.RowAttrNavigate(lamu.RoutePath("events.DetailRoute", map[string]getters.Getter[any]{"id": getters.Any(getters.Key[uint]("$row.ID"))})),
+//	     CreateUrl: lamu.RoutePath("events.CreateRoute", nil),
+//	 }
 type Timeline[T any] struct {
+	// Page embeds common component properties like Key and Roles.
 	Page
+	// UID represents the unique HTML element wrapper ID (defaults to "timeline-container").
 	UID             string
+	// Title represents the heading label text displayed above the timeline.
 	Title           string
+	// Classes represents additional CSS classes applied to the output HTML wrapper.
+	// (Discouraged: Use layout containers or theme styling instead of custom styling overrides).
 	Classes         string
-	Data            getters.Getter[ObjectList[T]] // list of items
-	OnClick         getters.Getter[string]        // per-item URL (GetterNavigate)
-	FilterComponent PageInterface                 // optional filter form
+	// Data represents the dynamic Getter retrieving the paginated ObjectList timeline payload.
+	Data            getters.Getter[ObjectList[T]]
+	// OnClick represents the dynamic getter returning target navigation URLs on item clicks.
+	OnClick         getters.Getter[string]
+	// FilterComponent represents an optional filter dropdown menu component.
+	FilterComponent PageInterface
+	// CreateUrl is the dynamic function retrieving the creation button target path.
 	CreateUrl       getters.Getter[string]
-	Children        []PageInterface // card content template
+	// Children represents the slice of sub-components rendering inside individual timeline card nodes.
+	Children        []PageInterface
 }
 
+// Build compiles the Timeline component into chronological cards lists, side guidelines and pagination panels.
 func (e Timeline[T]) Build(ctx context.Context) Node {
 	var data []T
 	if e.Data != nil {
@@ -135,14 +161,17 @@ func (e Timeline[T]) Build(ctx context.Context) Node {
 	)
 }
 
+// GetKey returns the unique key identifier for this Timeline.
 func (e Timeline[T]) GetKey() string {
 	return e.Key
 }
 
+// GetRoles returns the authorized roles required to view this Timeline.
 func (e Timeline[T]) GetRoles() []string {
 	return e.Roles
 }
 
+// GetChildren returns the slice of nested sub-components.
 func (e Timeline[T]) GetChildren() []PageInterface {
 	var children []PageInterface
 	if e.FilterComponent != nil {
@@ -152,6 +181,7 @@ func (e Timeline[T]) GetChildren() []PageInterface {
 	return children
 }
 
+// SetChildren replaces the slice of nested sub-components.
 func (e *Timeline[T]) SetChildren(children []PageInterface) {
 	offset := 0
 	if e.FilterComponent != nil && len(children) > 0 {

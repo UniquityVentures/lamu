@@ -15,12 +15,33 @@ import (
 	"github.com/UniquityVentures/lamu/registry"
 )
 
+// View represents the core page controller coordinating middleware layers and page template rendering pipelines.
+// It matches incoming HTTP requests, executes an ordered sequence of middleware [Layer] steps (e.g. data fetching, authentication, or updates),
+// parses input parameters, and renders target HTML pages compiled from [components.PageInterface] trees.
+//
+// Use Cases:
+//   - Defining request endpoints mapping back-office dashboards, user profiles, or transactional forms.
+//   - Structuring reusable middleware layers to execute prior to HTML rendering phases.
+//
+// Example:
+//
+//	var UserDetailView = &views.View{
+//		PageName:   "users.detail",
+//		PageLookup: myRegistryLookup,
+//		Layers: []registry.Pair[string, views.Layer]{
+//			registry.NewPair("detail", views.LayerDetail[User]{Key: getters.Static("$record")}),
+//		},
+//	}
 type View struct {
+	// PageName represents the unique identifier string referencing the page component.
 	PageName   string
+	// PageLookup represents the resolver function mapping page keys to [components.PageInterface] objects.
 	PageLookup func(name string) (components.PageInterface, bool)
+	// Layers represents the collection of middleware layers wrapping page views.
 	Layers     []registry.Pair[string, Layer]
 }
 
+// GetHandler compiles the View's middleware layers and rendering handlers into a single nested [http.Handler] flow.
 func (v *View) GetHandler() http.Handler {
 	var handler http.Handler = http.HandlerFunc(v.RenderPage)
 	for i := len(v.Layers) - 1; i >= 0; i-- {
@@ -29,14 +50,17 @@ func (v *View) GetHandler() http.Handler {
 	return handler
 }
 
+// ServeHTTP satisfies the standard http.Handler interface, executing View handlers.
 func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	v.GetHandler().ServeHTTP(w, r)
 }
 
+// GetPage resolves and returns the configured page component of this view.
 func (v *View) GetPage() (components.PageInterface, bool) {
 	return v.PageLookup(v.PageName)
 }
 
+// RenderPage renders the resolved page component writing output HTML templates directly.
 func (v *View) RenderPage(w http.ResponseWriter, r *http.Request) {
 	page, isPagePresent := v.GetPage()
 	if !isPagePresent {
@@ -58,7 +82,7 @@ func (v *View) RenderPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// isBenignResponseWriteError is true for typical disconnect errors from ResponseWriter.
+// isBenignResponseWriteError returns true if the error represents a benign connection termination event.
 func isBenignResponseWriteError(err error) bool {
 	if err == nil {
 		return false
@@ -80,8 +104,8 @@ func isBenignResponseWriteError(err error) bool {
 		strings.Contains(s, "use of closed network connection")
 }
 
-// ParseForm finds the first FormComponent in the view's page, parses the request form,
-// and returns the values and field errors. Returns true if parsing failed (error already written to w).
+// ParseForm traverses the page structure, locates the primary [components.FormInterface] child,
+// parses parameter inputs, and yields parsed values and validation errors.
 func (v *View) ParseForm(w http.ResponseWriter, r *http.Request) (map[string]any, map[string]error, error) {
 	page, _ := v.GetPage()
 	var parent components.ParentInterface
@@ -126,15 +150,15 @@ func (v *View) ParseForm(w http.ResponseWriter, r *http.Request) (map[string]any
 	return values, fieldErrors, nil
 }
 
+// WithLayer appends a new middleware layer block to the View execution stack.
 func (v *View) WithLayer(name string, layer Layer) *View {
 	// Append layer; keys are labels only and are not required to be unique.
 	v.Layers = append(v.Layers, registry.Pair[string, Layer]{Key: name, Value: layer})
 	return v
 }
 
-// InsertLayerBefore inserts a layer with the given name immediately
-// before the first layer whose Key matches beforeName. If no such
-// layer exists, it appends it to the end.
+// InsertLayerBefore inserts a middleware layer with the given name immediately before the first layer matching beforeName.
+// If the target layer is missing, it appends it to the end of the stack.
 func (v *View) InsertLayerBefore(beforeName, name string, layer Layer) *View {
 	p := registry.Pair[string, Layer]{Key: name, Value: layer}
 	for i, mw := range v.Layers {
@@ -147,9 +171,8 @@ func (v *View) InsertLayerBefore(beforeName, name string, layer Layer) *View {
 	return v.WithLayer(name, layer)
 }
 
-// InsertLayerAfter inserts a layer with the given name immediately
-// after the first layer whose Key matches afterName. If no such
-// layer exists, it appends it to the end.
+// InsertLayerAfter inserts a middleware layer with the given name immediately after the first layer matching afterName.
+// If the target layer is missing, it appends it to the end of the stack.
 func (v *View) InsertLayerAfter(afterName, name string, layer Layer) *View {
 	p := registry.Pair[string, Layer]{Key: name, Value: layer}
 	for i, mw := range v.Layers {
@@ -168,6 +191,7 @@ func (v *View) InsertLayerAfter(afterName, name string, layer Layer) *View {
 	return v.WithLayer(name, layer)
 }
 
+// WithLayers appends multiple middleware layer blocks to the View execution stack.
 func (v *View) WithLayers(layers ...registry.Pair[string, Layer]) *View {
 	for _, layer := range layers {
 		v.WithLayer(layer.Key, layer.Value)
@@ -175,6 +199,7 @@ func (v *View) WithLayers(layers ...registry.Pair[string, Layer]) *View {
 	return v
 }
 
+// PatchLayers applies function modifications to multiple middleware layers by matching keys.
 func (v *View) PatchLayers(layers ...registry.Pair[string, func(Layer) Layer]) *View {
 	for _, layer := range layers {
 		for i, mw := range v.Layers {
@@ -186,6 +211,7 @@ func (v *View) PatchLayers(layers ...registry.Pair[string, func(Layer) Layer]) *
 	return v
 }
 
+// PatchLayer applies a function patcher to the first middleware layer matching the name key.
 func (v *View) PatchLayer(name string, patcher func(Layer) Layer) *View {
 	for i, mw := range v.Layers {
 		if mw.Key == name {

@@ -13,13 +13,66 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// DBInitHook runs after core DB setup (migrations, callbacks). Hooks run in registration order.
+// DBInitHook represents a hook function executed after core database setup is complete (migrations, default callbacks).
+// Hooks are executed in registration order and receive the active *gorm.DB instance, returning a decorated/modified *gorm.DB client.
+//
+// Use Cases:
+//   - Configuring connection pool properties (e.g., setting maximum connections).
+//   - Triggering initial auto-migrations for non-plugin core tables.
+//   - Running database logging configurations or starting background cron workers with database handles.
+//
+// Example Definition:
+//
+//	var ConnPoolHook DBInitHook = func(db *gorm.DB) *gorm.DB {
+//		sqlDB, err := db.DB()
+//		if err == nil {
+//			sqlDB.SetMaxOpenConns(20)
+//		}
+//		return db
+//	}
+//
+// Example Registration:
+//
+//	// In your lamu.Plugin setup:
+//	lamu.Plugin{
+//		DBInitHooks: lamu.PluginStages(func() PluginFeatures[DBInitHook] {
+//			return PluginFeatures[DBInitHook]{
+//				Entries: []registry.Pair[string, DBInitHook]{
+//					registry.NewPair("conn_pool", ConnPoolHook),
+//				},
+//			}
+//		}),
+//	}
+//
+// Example Patch:
+//
+//	// Register a patch to chain or decorate existing DBInitHooks from another plugin:
+//	lamu.Plugin{
+//		DBInitHooks: lamu.PluginStages(func() PluginFeatures[DBInitHook] {
+//			return PluginFeatures[DBInitHook]{
+//				Patches: []registry.Pair[string, func(DBInitHook) DBInitHook]{
+//					registry.NewPair("conn_pool", func(existing DBInitHook) DBInitHook {
+//						return func(db *gorm.DB) *gorm.DB {
+//							db = existing(db)
+//							// Chain extra configurations:
+//							return db.Debug()
+//						}
+//					}),
+//				},
+//			}
+//		}),
+//	}
+//
+// Example Retrieval:
+//
+//	hook, ok := RegistryDBInit.Get("conn_pool")
 type DBInitHook func(*gorm.DB) *gorm.DB
 
-// RegistryDBInit stores DB init hooks; iterate with [registry.RegisterOrder] to preserve registration order.
-// [AllStable] returns an internal cached slice — do not mutate it.
+// RegistryDBInit represents the global immutable registry tracking database initialization hooks.
 var RegistryDBInit *registry.ImmutableRegistry[DBInitHook] = &registry.ImmutableRegistry[DBInitHook]{}
 
+// GetDbConn opens and configures a GORM connection using the provided database configurations.
+// It overrides default delete callbacks to enforce hard deletes (disabling soft deletes).
 func GetDbConn(config LamuConfig) (*gorm.DB, error) {
 	var dialector gorm.Dialector
 
@@ -56,6 +109,7 @@ func GetDbConn(config LamuConfig) (*gorm.DB, error) {
 	return db, nil
 }
 
+// InitDB executes pending schema migrations and invokes registered database initialization hooks sequentially.
 func InitDB(db *gorm.DB, config LamuConfig) error {
 	sqlDB, err := db.DB()
 	if err != nil {

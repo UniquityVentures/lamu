@@ -12,23 +12,44 @@ import (
 	. "maragu.dev/gomponents/html"
 )
 
-// InputPointsDecimal is a decimal-amount field for form Values that round-trip
-// through [PointsDecimal] so [views.PopulateFromMap] receives the correct type
-// (unlike [InputText], which yields a string and breaks mapstructure decode).
+// InputPointsDecimal represents a high-precision decimal value input form field component.
+// It parses decimal strings into custom [fields.DecimalSix] objects to avoid type-decoding mismatches during CRUD maps parsing.
+//
+// Use Cases:
+//   - Inputting financial currencies, precise product weights, or fraction values (e.g. interest rates, currency conversion ratios).
+//
+// Example:
+//
+//	 &components.InputPointsDecimal{
+//	     Label:  "Interest Rate",
+//	     Name:   "interest_rate",
+//	     Getter: getters.Key[fields.DecimalSix]("$in.InterestRate"),
+//	 }
 type InputPointsDecimal struct {
+	// Page embeds common component properties like Key and Roles.
 	Page
+	// Label represents the header label text displayed above the decimal input.
 	Label    string
+	// Name represents the HTML form parameter name attribute.
 	Name     string
+	// Getter is the dynamic function retrieving the default/current fields.DecimalSix value.
 	Getter   getters.Getter[fields.DecimalSix]
+	// Required is a boolean indicating if this form decimal is a mandatory input.
 	Required bool
+	// Classes represents additional CSS classes applied to the output HTML wrapper.
+	// (Discouraged: Use layout containers or theme styling instead of custom styling overrides).
 	Classes  string
+	// Hidden specifies if this decimal field is rendered as a hidden input element.
 	Hidden   bool
 }
 
+// GetKey returns the unique key identifier for this InputPointsDecimal component.
 func (e InputPointsDecimal) GetKey() string { return e.Key }
 
+// GetRoles returns the authorized roles required to view this InputPointsDecimal.
 func (e InputPointsDecimal) GetRoles() []string { return e.Roles }
 
+// Build compiles the InputPointsDecimal component into a Div wrapping a decimal text Input.
 func (e InputPointsDecimal) Build(ctx context.Context) Node {
 	text := ""
 	if e.Getter != nil {
@@ -57,6 +78,7 @@ func (e InputPointsDecimal) Build(ctx context.Context) Node {
 	)
 }
 
+// Parse extracts and unmarshals string values into a fields.DecimalSix object.
 func (e InputPointsDecimal) Parse(v any, _ context.Context) (any, error) {
 	vals, _ := v.([]string)
 	if len(vals) == 0 || strings.TrimSpace(vals[0]) == "" {
@@ -73,4 +95,5 @@ func (e InputPointsDecimal) Parse(v any, _ context.Context) (any, error) {
 	return out, nil
 }
 
+// GetName returns the HTML form element's name attribute value.
 func (e InputPointsDecimal) GetName() string { return e.Name }

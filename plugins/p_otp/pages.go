@@ -2,6 +2,7 @@ package p_otp
 
 import (
 	"github.com/UniquityVentures/lamu/components"
+	"github.com/UniquityVentures/lamu/getters"
 	"github.com/UniquityVentures/lamu/lamu"
 	"github.com/UniquityVentures/lamu/plugins/p_users"
 	"github.com/UniquityVentures/lamu/registry"
@@ -33,7 +34,7 @@ func patchUsersLoginPageWithOtpForgotLink(page components.PageInterface) compone
 
 	forgot := &components.ButtonLink{
 		Page:  components.Page{Key: otpForgotPasswordLoginLinkKey},
-		Label: "Forgot password?",
+		Label: getters.Static("Forgot password?"),
 		Link:  lamu.RoutePath("otp.ForgotPasswordRoute", nil),
 	}
 

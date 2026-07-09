@@ -12,8 +12,42 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-// GooseVersionTableName returns a goose version table name for a migrations registry key:
-// deterministic, Postgres/SQLite-safe, one table per plugin.
+// GooseVersionTableName derives a database-safe schema version tracker table name for a plugin migration registry key.
+// It maps plugin keys deterministically to clean snake_case table names (prefixed with "goose_migrations__")
+// ensuring separate tables per plugin so that numeric migration versions can overlap across plugins.
+//
+// # Database Migrations Structure
+//
+// In Lamu, database schema migrations are managed per plugin. To add migrations to a plugin:
+//
+// 1. Create a `migrations` folder inside your plugin directory structure.
+// 2. Add SQL migration files inside the `migrations` directory following Goose's syntax structure:
+//
+//	-- 00001_create_users_table.sql
+//	-- +goose Up
+//	CREATE TABLE users (
+//	    id SERIAL PRIMARY KEY,
+//	    email VARCHAR(255) NOT NULL UNIQUE
+//	);
+//
+//	-- +goose Down
+//	DROP TABLE users;
+//
+// 3. Embed the migration files and register the filesystem on your [Plugin] configuration under the Migrations field:
+//
+//	//go:embed migrations/*.sql
+//	var migrationFS embed.FS
+//
+//	// In your lamu.Plugin setup:
+//	lamu.Plugin{
+//	    Migrations: lamu.PluginStages(func() lamu.PluginFeatures[lamu.UsefulFilesystem] {
+//	        return lamu.PluginFeatures[lamu.UsefulFilesystem]{
+//	            Entries: []registry.Pair[string, lamu.UsefulFilesystem]{
+//	                registry.NewPair("my_plugin", migrationFS),
+//	            },
+//	        }
+//	    }),
+//	}
 func GooseVersionTableName(registryKey string) string {
 	var b strings.Builder
 	b.WriteString("goose_migrations__")
@@ -53,8 +87,8 @@ func gooseDialect(t DBType) (goose.Dialect, error) {
 	}
 }
 
-// gooseUpPluginMigrations runs goose Up per plugin migrations FS ([RegistryMigrations.AllStable]
-// order), separate version table per key so numeric versions can overlap across plugins.
+// gooseUpPluginMigrations cycles through all registered plugin migration folders, loading their target versions
+// from their specific goose table names, and runs the "Up" migrations to update the database schema.
 func gooseUpPluginMigrations(ctx context.Context, sqlDB *sql.DB, config LamuConfig) error {
 	pairs := *RegistryMigrations.AllStable()
 	if len(pairs) == 0 {

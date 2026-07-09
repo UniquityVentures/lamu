@@ -12,29 +12,51 @@ import (
 	"gorm.io/driver/sqlite"
 )
 
+// LamuConfig represents the top-level configuration structure mapped from TOML files.
+// It carries connection details, database setups, UDS paths, CORS trusted origins, and plugin parameters.
 type LamuConfig struct {
+	// Debug enables verbose debug level outputs and diagnostics.
 	Debug          bool
+	// DBType specifies the database driver engine type (e.g. Postgres, Sqlite).
 	DBType         DBType
+	// SqliteConfig represents driver parameters for SQLite DB files.
 	SqliteConfig   *sqlite.Config
+	// PostgresConfig represents connection parameters for PostgreSQL connections.
 	PostgresConfig *postgres.Config
+	// Address represents the TCP bind address (e.g. ":8080").
 	Address        string
+	// UDS represents the Unix Domain Socket path to bind to (overrides Address if specified).
 	UDS            string
+	// GeneratorOrder specifies the sequence of db seeder names to run during seed execution.
 	GeneratorOrder []string
+	// TrustedOrigins lists the allowed CORS request origin hosts.
 	TrustedOrigins []string
+	// Plugins maps raw TOML configuration sections to specific plugin config structures.
 	Plugins        map[string]toml.Primitive
 }
 
+// DBType represents the configuration database engine driver selector.
 type DBType string
 
 const (
+	// DBTypeSqlite specifies GORM SQLite database configurations.
 	DBTypeSqlite   = DBType("Sqlite")
+	// DBTypePostgres specifies GORM PostgreSQL database configurations.
 	DBTypePostgres = DBType("Postgres")
 )
 
-// LoadConfigFromFile decodes the top-level config TOML, then decodes each [Plugins.<key>] section
-// into the plugin config pointer registered for that key. It calls [BuildAllRegistries] first
-// so RegistryConfig is populated; pass the same plugins slice you pass to [Start]. For tools that
-// only need core DB settings, pass nil plugins.
+// LoadConfigFromFile decodes a TOML configuration file, registers application plugins,
+// initializes database connections, decodes specific plugin configurations, and runs database migrations and hooks.
+//
+// Use Cases:
+//   - Parsing configurations from files at startup before running the Cobra TUI or web server.
+//
+// Example:
+//
+//	config, err := lamu.LoadConfigFromFile("config.toml", plugins)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
 func LoadConfigFromFile(path string, plugins []registry.Pair[string, Plugin]) (LamuConfig, error) {
 	var config LamuConfig
 

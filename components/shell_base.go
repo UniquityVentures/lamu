@@ -9,16 +9,38 @@ import (
 	. "maragu.dev/gomponents/html"
 )
 
+// ShellBase represents the global root HTML document scaffold wrapper component.
+// It compiles the standard HTML skeleton (doctype, head metadata, responsive viewport limits), imports essential CDN dependencies
+// (Tailwind CSS v4, DaisyUI v5, HTMX v2, Alpine.js v3, morph/persist scripts), sets up standard themes (light/dark with toggle functions),
+// handles global error toast notifications, and renders child elements inside the body container.
+//
+// Use Cases:
+//   - Serves as the primary root layout container for all full-page views throughout the application.
+//
+// Example:
+//
+//	 &components.ShellBase{
+//	     ExtraHead: []components.PageInterface{
+//	         &components.MapDisplayLibreHead{},
+//	     },
+//	     Children: []components.PageInterface{
+//	         &components.LayoutSidebar{...},
+//	     },
+//	 }
 type ShellBase struct {
+	// Page embeds common component properties like Key and Roles.
 	Page
+	// Children represents the slice of main sub-components rendered within the document body.
 	Children  []PageInterface
+	// ExtraHead represents the slice of custom header tags (e.g. metadata, script, link nodes) injected in the HTML head.
 	ExtraHead []PageInterface
 }
 
-// RegistryShellHeadNodes allows plugins to contribute additional tags to <head>.
-// Items are rendered in sorted registry key order.
+// RegistryShellHeadNodes allows plugins to contribute custom additional tags directly into the HTML <head> block.
+// Registered items are rendered sequentially in sorted registry key order.
 var RegistryShellHeadNodes = registry.NewRegistry[Node]()
 
+// Body compiles the core page content wrapper inside the parent HTML document shell structure, including global indicators and error toasts.
 func (e ShellBase) Body(ctx context.Context) Node {
 	group := Group{}
 	for _, child := range e.Children {
@@ -52,6 +74,7 @@ func (e ShellBase) Body(ctx context.Context) Node {
 	)
 }
 
+// Build compiles the ShellBase component into a complete Doctype HTML node structure including stylesheet scripts and tags.
 func (e ShellBase) Build(ctx context.Context) Node {
 	registryHeadGroup := Group{}
 	for _, item := range *RegistryShellHeadNodes.AllStable(registry.RegisterOrder[Node]{}) {
@@ -141,18 +164,22 @@ func (e ShellBase) Build(ctx context.Context) Node {
 	)
 }
 
+// GetKey returns the unique key identifier for this ShellBase component.
 func (e ShellBase) GetKey() string {
 	return e.Key
 }
 
+// GetRoles returns the authorized roles required to view this ShellBase.
 func (e ShellBase) GetRoles() []string {
 	return e.Roles
 }
 
+// GetChildren returns the slice of nested sub-components.
 func (e ShellBase) GetChildren() []PageInterface {
 	return e.Children
 }
 
+// SetChildren replaces the slice of nested sub-components.
 func (e *ShellBase) SetChildren(children []PageInterface) {
 	e.Children = children
 }

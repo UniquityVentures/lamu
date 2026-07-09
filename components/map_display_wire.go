@@ -14,7 +14,8 @@ const MapDisplayWireMaxBytes = 1048576
 // MapDisplayViewportDecodeMaxBytes caps decompressed CBOR from client viewport messages (gzip bomb mitigation).
 const MapDisplayViewportDecodeMaxBytes int64 = 65536
 
-// EncodeMapDisplayWire returns gzip(CBOR payload) suitable as a WebSocket binary frame body.
+// EncodeMapDisplayWire returns a gzip-compressed CBOR payload suitable as a WebSocket binary frame body.
+// It verifies that the resulting payload fits within the protocol maximum size constraint [MapDisplayWireMaxBytes].
 func EncodeMapDisplayWire(cborPayload []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	zw, err := gzip.NewWriterLevel(&buf, gzip.BestSpeed)
@@ -36,6 +37,7 @@ func EncodeMapDisplayWire(cborPayload []byte) ([]byte, error) {
 }
 
 // DecodeMapDisplayWire decompresses one gzip-wrapped payload from the client (viewport updates).
+// It enforces safety limits using an io.LimitReader up to maxDecompressed to prevent gzip-bomb exploits.
 func DecodeMapDisplayWire(compressed []byte, maxDecompressed int64) ([]byte, error) {
 	if len(compressed) > MapDisplayWireMaxBytes {
 		return nil, fmt.Errorf("map display wire exceeds protocol maximum (1048576 bytes)")

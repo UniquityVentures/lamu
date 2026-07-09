@@ -1,55 +1,213 @@
 // Package lamu is the application kernel: configuration loading, HTTP server wiring,
 // and aggregated plugin registries (pages, views, routes, models, migrations, etc.).
 //
-// # Plugins and registries
+// # Quickstart
 //
-// Each plugin exposes a [registry.Pair] of plugin key and [Plugin]. Feature bundles such as
-// [Plugin.Pages] return [PluginFeatures] with Entries (named contributions) and optional Patches
-// (transform functions keyed like Entries).
+// To bootstrap a Lamu application, create a main entry file (e.g. main.go) loading active plugins
+// and calling the CLI bootstrapper:
 //
-// [BuildAllRegistries] merges every plugin’s feature callbacks into global immutable registries
-// ([RegistryPage], [RegistryView], …). Call it once during startup with the same slice passed to
-// [LoadConfigFromFile] / [Start].
+//	package main
 //
-// # PluginFeatures.Build and patch functions
+//	import (
+//		"log"
 //
-// [PluginFeatures.Build] turns Entries plus Patches into the slice consumed by
-// [registry.NewImmutableRegistry]. For each Entry, every Patch with the same Key is applied in
-// registration order: entries[i].Value = patchN(… patch2(patch1(entry)) …).
+//		"github.com/UniquityVentures/lamu/lamu"
+//		"github.com/UniquityVentures/lamu/plugins/p_dashboard"
+//		"github.com/UniquityVentures/lamu/plugins/p_users"
+//		"github.com/UniquityVentures/lamu/registry"
+//	)
 //
-// [FillRegistry] merges plugin features incrementally and runs Build after each merge while
-// assembling one registry. Every function assigned to a [Plugin] feature field ([Plugin.Pages],
-// [Plugin.Views], [Plugin.Routes], [Plugin.DBInitHooks], etc.) must therefore be deterministic and
-// repeat-safe: calling it more than once must describe the same logical contributions and must not
-// append to package-level state, mutate previously returned entries, or otherwise depend on call
-// count.
+//	func main() {
+//		// 1. Register the list of active plugins to load into the application kernel.
+//		plugins := []registry.Pair[string, lamu.Plugin]{
+//			registry.NewPair("dashboard", p_dashboard.GetPlugin()),
+//			registry.NewPair("users", p_users.GetPlugin()),
+//		}
 //
-// Patch functions MUST be pure and idempotent:
+//		// 2. Load database settings, server addresses, and plugin parameters from config.toml.
+//		config, err := lamu.LoadConfigFromFile("config.toml", plugins)
+//		if err != nil {
+//			log.Fatalf("failed loading configuration file: %v", err)
+//		}
 //
-//   - Pure: do not mutate the input value T in place. [PluginFeatures.Build] shallow-clones the
-//     Entries slice only; each Pair’s Value is typically a pointer shared across calls. Mutating it
-//     leaks state between Build passes and across merges.
+//		// 3. Build global registries and run the Cobra CLI bootstrapper.
+//		if err := lamu.Start(config, plugins); err != nil {
+//			log.Fatalf("failed executing application entry: %v", err)
+//		}
+//	}
 //
-//   - Idempotent: applying the same patch again to its own output must yield an equivalent result
-//     (no duplicated sidebar rows, no double-append). Prefer returning a copy with updated fields,
-//     and use stable [components.PageInterface] keys or explicit guards when inserting children.
+// Line-by-line Breakdown:
+//   - Step 1: Defines a slice of [registry.Pair] mapping plugin names to their [Plugin] configurations.
+//   - Step 2: Calls [LoadConfigFromFile] to decode configurations, open GORM connections, and execute initial schemas.
+//   - Step 3: Invokes [Start] to initialize the CLI command tree (Root starts the server, generate seeds, tui boots TUI).
 //
-// Entries stored by pointer (common for pages and views) share identity across Build passes until a
-// patch replaces them with a new value; helpers like [components.InsertChildAfter] mutate their
-// receiver and are unsafe to call during patching unless you operate on a fresh clone.
+// # Minimal Plugin
 //
-// When T is a small struct passed by value (for example [Route]), each patch receives a copy of the
-// registry entry; assigning fields on that copy does not corrupt other registry keys, but patches
-// should still return the updated struct explicitly for clarity.
+// Plugins are discrete packages exposing a GetPlugin function returning a [Plugin] structure:
 //
-// Feature callbacks themselves ([Plugin.Pages]’s closure, etc.) should construct or return a stable
-// description of the plugin’s entries and patches. If they use package-level slices for legacy
-// registration-style code, those slices must be fully populated before registry assembly and the
-// callback must only read them.
+//	package myplugin
 //
-// Patches that add child components to pages or layers to views are a common source of accidental
-// non-idempotency. Give inserted components stable keys, check whether the key already exists before
-// inserting, and return a fresh shallow copy of pointer-backed values instead of appending directly
-// to the original value.
-
+//	import (
+//		"net/url"
+//
+//		"github.com/UniquityVentures/lamu/lamu"
+//	)
+//
+//	func GetPlugin() lamu.Plugin {
+//		return lamu.Plugin{
+//			Type:        lamu.PluginTypeApp,
+//			VerboseName: "Inventory Manager",
+//			Icon:        "box",
+//			URL: &url.URL{
+//				Path: "/inventory/",
+//			},
+//		}
+//	}
+//
+// Explanation:
+//   - Type: Specifies [PluginTypeApp] for standalone logic, [PluginTypeAddon] (which hides the plugin from the dashboard's app grid), or [PluginTypeService].
+//   - VerboseName & Icon: Defines the display name and icon used on the admin landing page.
+//   - URL: Represents the primary landing URL path pointing to the plugin home view.
+//
+// # Adding Routes
+//
+// To register endpoint paths, implement a Route entry under [Plugin.Routes] returning page layouts:
+//
+//	package myplugin
+//
+//	import (
+//		"context"
+//		"net/http"
+//
+//		"github.com/UniquityVentures/lamu/components"
+//		"github.com/UniquityVentures/lamu/lamu"
+//		"github.com/UniquityVentures/lamu/registry"
+//		. "maragu.dev/gomponents"
+//		"maragu.dev/gomponents/html"
+//	)
+//
+//	type HelloPage struct {
+//		components.Page
+//	}
+//
+//	func (p HelloPage) Build(ctx context.Context) Node {
+//		return html.Div(html.H1(Text("Hello, World!")))
+//	}
+//
+//	func GetPlugin() lamu.Plugin {
+//		return lamu.Plugin{
+//			Type:        lamu.PluginTypeApp,
+//			VerboseName: "Hello Plugin",
+//			Pages: lamu.PluginStages(func() lamu.PluginFeatures[components.PageInterface] {
+//				return lamu.PluginFeatures[components.PageInterface]{
+//					Entries: []registry.Pair[string, components.PageInterface]{
+//						registry.NewPair("myplugin.hello", HelloPage{}),
+//					},
+//				}
+//			}),
+//			Routes: lamu.PluginStages(func() lamu.PluginFeatures[lamu.Route] {
+//				return lamu.PluginFeatures[lamu.Route]{
+//					Entries: []registry.Pair[string, lamu.Route]{
+//						registry.NewPair("hello_route", lamu.Route{
+//							Path:    "/hello/",
+//							Handler: lamu.GetPageView("myplugin.hello"),
+//						}),
+//					},
+//				}
+//			}),
+//		}
+//	}
+//
+// Explanation:
+//   - [components.PageInterface] represents visual layout templates containing HTML elements structure.
+//   - [GetPageView] constructs standard view controller handlers referencing page keys in [RegistryPage].
+//   - [Route] maps paths to handlers, dynamically resolving wildcard parameters if path segments match.
+//
+// # Adding Views and Layers
+//
+// Views wrap page components in middleware pipeline layers. Here is an example of mapping custom middlewares:
+//
+//	package myplugin
+//
+//	import (
+//		"log"
+//		"net/http"
+//
+//		"github.com/UniquityVentures/lamu/lamu"
+//		"github.com/UniquityVentures/lamu/registry"
+//		"github.com/UniquityVentures/lamu/views"
+//	)
+//
+//	type LogLayer struct{}
+//
+//	func (l LogLayer) Next(view views.View, next http.Handler) http.Handler {
+//		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//			log.Printf("Executing view page: %s", view.PageName)
+//			next.ServeHTTP(w, r)
+//		})
+//	}
+//
+//	func GetPlugin() lamu.Plugin {
+//		myView := lamu.GetPageView("myplugin.hello").
+//			WithLayer("logger", LogLayer{})
+//
+//		return lamu.Plugin{
+//			Type:        lamu.PluginTypeApp,
+//			VerboseName: "Views Plugin",
+//			Views: lamu.PluginStages(func() lamu.PluginFeatures[*views.View] {
+//				return lamu.PluginFeatures[*views.View]{
+//					Entries: []registry.Pair[string, *views.View]{
+//						registry.NewPair("hello_view", myView),
+//					},
+//				}
+//			}),
+//		}
+//	}
+//
+// Other available view layers:
+//   - [views.LayerDetail]: Loads database records by context key indicators.
+//   - [views.LayerUpdate]: Updates database rows inside transactions on POST request actions.
+//   - [views.LayerCreate]: Inserts new database records on POST request actions.
+//   - [views.LayerDelete]: Deletes database records on POST request actions.
+//   - [views.LayerList]: Queries database collections lists mapping them to data lists.
+//   - [views.LayerSingleton]: Manages site configurations single-row databases entries.
+//
+// # Patching Existing Features of a Plugin
+//
+// Plugins can modify pages, views, or configurations registered by other plugins using Patches:
+//
+//	package myaddon
+//
+//	import (
+//		"github.com/UniquityVentures/lamu/components"
+//		"github.com/UniquityVentures/lamu/lamu"
+//		"github.com/UniquityVentures/lamu/registry"
+//	)
+//
+//	func GetPlugin() lamu.Plugin {
+//		return lamu.Plugin{
+//			Type:        lamu.PluginTypeAddon,
+//			VerboseName: "Dashboard Decorator",
+//			Pages: lamu.PluginStages(func() lamu.PluginFeatures[components.PageInterface] {
+//				return lamu.PluginFeatures[components.PageInterface]{
+//					Patches: []registry.Pair[string, func(components.PageInterface) components.PageInterface]{
+//						registry.NewPair("p_dashboard.home", func(existing components.PageInterface) components.PageInterface {
+//							// Verify insertion element doesn't exist yet to maintain idempotency
+//							if components.HasChild(existing, "patched_banner") {
+//								return existing
+//							}
+//							banner := components.Header{Key: "patched_banner", Title: "Patched Dashboard"}
+//							return components.InsertChildFirst(existing, banner)
+//						}),
+//					},
+//				}
+//			}),
+//		}
+//	}
+//
+// Purity and Idempotency Rules:
+//
+//   - Pure: Do not mutate input arguments in place. Return a copy or new value if modifying pointer fields.
+//   - Idempotent: Patch application must yield equivalent results if run multiple times (verify keys before appends).
+//   - Merge Safety: Features merges execute in sequence. Package state variables must not be mutated.
 package lamu

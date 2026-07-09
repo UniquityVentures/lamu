@@ -13,12 +13,14 @@ import (
 )
 
 // TableWithColumns is implemented by [DataTable] for [ButtonToggleColumns].
+// TableWithColumns represents a table interface containing query columns configured with [TableColumn].
 type TableWithColumns interface {
 	PageInterface
+	// TableColumns returns the configuration list of table columns.
 	TableColumns() []TableColumn
 }
 
-// ParseEnabledTableColumnsParam parses a comma-separated list of [TableColumn.Name] values into a set.
+// ParseEnabledTableColumnsParam parses a comma-separated list of [TableColumn.Name] parameters into a boolean set.
 func ParseEnabledTableColumnsParam(s string) map[string]bool {
 	if s == "" {
 		return map[string]bool{}
@@ -34,7 +36,7 @@ func ParseEnabledTableColumnsParam(s string) map[string]bool {
 	return m
 }
 
-// FormatEnabledTableColumnsQuery encodes enabled names as a comma-separated query value (stable order).
+// FormatEnabledTableColumnsQuery encodes enabled column names into a comma-separated query string in stable order.
 func FormatEnabledTableColumnsQuery(enabled map[string]bool) string {
 	if len(enabled) == 0 {
 		return ""
@@ -49,7 +51,7 @@ func FormatEnabledTableColumnsQuery(enabled map[string]bool) string {
 	return strings.Join(names, ",")
 }
 
-// FilterTableColumnsByEnabledMap keeps columns with empty Name (always visible) or Name present in enabled with value true.
+// FilterTableColumnsByEnabledMap filters columns returning only those with empty Name (always visible) or those marked as enabled in the map.
 func FilterTableColumnsByEnabledMap(cols []TableColumn, enabled map[string]bool) []TableColumn {
 	out := make([]TableColumn, 0, len(cols))
 	for _, col := range cols {
@@ -60,9 +62,7 @@ func FilterTableColumnsByEnabledMap(cols []TableColumn, enabled map[string]bool)
 	return out
 }
 
-// GetterEnabledColumnsFromContext returns a getter that reads map[string]bool from ctx.Value(key).
-// If the value is missing, the getter returns (nil, nil) so [DataTable] shows every column.
-// If the value is present, it must be map[string]bool (possibly empty).
+// GetterEnabledColumnsFromContext yields a Getter function retrieving the enabled columns set from context values.
 func GetterEnabledColumnsFromContext(key string) getters.Getter[map[string]bool] {
 	return func(ctx context.Context) (map[string]bool, error) {
 		v := ctx.Value(key)
@@ -132,22 +132,38 @@ func tableToggleColumnsURL(req *http.Request, queryKey, toggleName string, cols 
 	return u.String()
 }
 
-// ButtonToggleColumns is a dropdown of per-column toggles. It edits the queryKey param (comma-separated
-// [TableColumn.Name] values) to match views.LayerTableToggleColumns and [ParseEnabledTableColumnsParam].
+// ButtonToggleColumns represents a table toolbar dropdown selector presenting checkbox toggles for column visibility.
+// It modifies the current query URL parameter (comma-separated column names list) to dynamically toggle visible fields.
+//
+// Use Cases:
+//   - Letting administrators hide/display fields (e.g. creation dates, secondary parameters) on active data grids.
+//
+// Example:
+//
+//	 &components.ButtonToggleColumns{
+//	     Table:    getters.Static(myDataTable),
+//	     QueryKey: "cols",
+//	 }
 type ButtonToggleColumns struct {
+	// Page embeds common component properties like Key and Roles.
 	Page
+	// Table is the dynamic function retrieving the TableWithColumns component to toggle.
 	Table    getters.Getter[TableWithColumns]
+	// QueryKey represents the query parameter string key representing column flags (e.g. "cols").
 	QueryKey string
 }
 
+// GetKey returns the unique key identifier for this ButtonToggleColumns component.
 func (e ButtonToggleColumns) GetKey() string {
 	return e.Key
 }
 
+// GetRoles returns the authorized roles required to view this ButtonToggleColumns.
 func (e ButtonToggleColumns) GetRoles() []string {
 	return e.Roles
 }
 
+// Build compiles the ButtonToggleColumns component into an HTML dropdown selector element.
 func (e ButtonToggleColumns) Build(ctx context.Context) Node {
 	if e.Table == nil || e.QueryKey == "" {
 		return Group{}

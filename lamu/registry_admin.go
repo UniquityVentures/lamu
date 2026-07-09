@@ -1,3 +1,7 @@
+// WARNING: This file is currently a Work in Progress (WIP). The structures, helper functions,
+// interfaces, and registries defined in this file (including AdminPanel, AdminPanelInterface,
+// and RegistryAdmin) are unstable and should NOT be used in active application setups.
+
 package lamu
 
 import (
@@ -41,6 +45,7 @@ func setFieldFromString(fv reflect.Value, s string) {
 	}
 }
 
+// Deprecated: This struct is a Work in Progress (WIP) and should NOT be used.
 type AdminPanel[T any] struct {
 	SearchField string
 	ListFields  []string
@@ -262,6 +267,7 @@ func (a AdminPanel[T]) ExportCSV(db *gorm.DB, path string) (int, error) {
 	return len(rows), nil
 }
 
+// Deprecated: This interface is a Work in Progress (WIP) and should NOT be used.
 type AdminPanelInterface interface {
 	IsAdminPanel() bool
 	ModelName() string
@@ -274,4 +280,5 @@ type AdminPanelInterface interface {
 	ExportCSV(db *gorm.DB, path string) (int, error)
 }
 
+// Deprecated: This registry is a Work in Progress (WIP) and should NOT be used.
 var RegistryAdmin *registry.Registry[AdminPanelInterface] = registry.NewRegistry[AdminPanelInterface]()

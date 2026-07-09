@@ -1,3 +1,6 @@
+// WARNING: This file is currently a Work in Progress (WIP). The structures, helper functions,
+// and methods defined in this file are unstable and should NOT be used in active application setups.
+
 package lamu
 
 import (
@@ -26,6 +29,7 @@ const (
 
 const sidebarWidth = 20
 
+// Deprecated: This struct is a Work in Progress (WIP) and should NOT be used.
 type model struct {
 	currentTab int
 	tabs       []registry.Pair[string, AdminPanelInterface]
@@ -45,6 +49,7 @@ type model struct {
 	rowScroll  int
 }
 
+// Deprecated: This function is a Work in Progress (WIP) and should NOT be used.
 func initialModel(db *gorm.DB) model {
 	stable := RegistryAdmin.AllStable(registry.AlphabeticalByKey[AdminPanelInterface]{})
 	m := model{

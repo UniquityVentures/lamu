@@ -1,3 +1,8 @@
+// Package registry provides a mechanism to store and modify objects.
+//
+// It allows storing base objects (as unpatched items) and patches to those
+// objects separately, so that the base objects can be customized or modified
+// using the registered patches before they are built and retrieved.
 package registry
 
 import (
@@ -15,7 +20,12 @@ import (
 	"github.com/UniquityVentures/lamu/getters"
 )
 
-// At most one entry per key, the last one survives
+// ImmutableRegistry stores a static set of registry items.
+//
+// Unlike [Registry], which supports lazy building and patches, an ImmutableRegistry
+// is designed to be constructed once and assigned, without any subsequent modification.
+// At most one entry is kept per key; if the constructor receives duplicate keys,
+// the last entry survives.
 type ImmutableRegistry[T any] struct {
 	itemsMap  map[string]RegistryItem[T]
 	itemsList []Pair[string, T]
@@ -47,6 +57,8 @@ func NewImmutableRegistry[T any](entries []Pair[string, T]) ImmutableRegistry[T]
 	}
 }
 
+// Get retrieves the value associated with the given name. It returns a copy
+// of the stored value, and a boolean indicating whether the key was found.
 func (r *ImmutableRegistry[T]) Get(name string) (T, bool) {
 	var zero T
 	item, ok := r.itemsMap[name]
@@ -56,10 +68,15 @@ func (r *ImmutableRegistry[T]) Get(name string) (T, bool) {
 	return item.Item, true
 }
 
+// AllStable returns a pointer to the slice of all items in the registry.
+// The slice contains deduplicated elements in the same order as the entries
+// supplied when constructing the registry.
 func (r *ImmutableRegistry[T]) AllStable() *[]Pair[string, T] {
 	return &r.itemsList
 }
 
+// All returns a new map containing all items in the registry. The returned map
+// is a clone of the registry's internal state and can be safely mutated.
 func (r *ImmutableRegistry[T]) All() map[string]T {
 	items := make(map[string]T, len(r.itemsList))
 	for _, item := range r.itemsList {
@@ -68,6 +85,7 @@ func (r *ImmutableRegistry[T]) All() map[string]T {
 	return items
 }
 
+// NewRegistry initializes and returns a new, empty Registry.
 func NewRegistry[T any]() *Registry[T] {
 	return &Registry[T]{
 		unpatchedItems: map[string]RegistryItem[T]{},
@@ -246,6 +264,11 @@ func (r *Registry[T]) Register(name string, unpatchedItem T) error {
 	return nil
 }
 
+// Patch registers a new patcher function for the registry item with the given name.
+//
+// Patches are applied to the base item in the order they were registered.
+// It is important that the patcher function is idempotent, as it may be called
+// any number of times (e.g., during rebuilds).
 func (r *Registry[T]) Patch(name string, patcher func(T) T) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -323,6 +346,12 @@ func (r *Registry[T]) buildLocked() {
 	r.isBuilt = true
 }
 
+// Get retrieves the value associated with the given name, building the registry
+// if it is not already built.
+//
+// If a build is currently in progress, this method will immediately return the zero value
+// and false to avoid recursion deadlocks (for example, if patchers or getters re-enter
+// the same registry during building).
 func (r *Registry[T]) Get(name string) (T, bool) {
 	var zero T
 

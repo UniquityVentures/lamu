@@ -6,8 +6,8 @@ import (
 	"github.com/UniquityVentures/lamu/views"
 )
 
-// FillRegistry merges feature bundles from each plugin, then assigns an immutable registry after
-// each merge by calling [PluginFeatures.Build]. Patches must be pure and idempotent; see package lamu doc.
+// FillRegistry merges feature bundles from plugins, then populates and assigns an immutable registry
+// after executing [PluginFeatures.Build] for each element block. Patches must be pure and idempotent.
 func FillRegistry[T any](features [][]func() PluginFeatures[T], targetRegistry *registry.ImmutableRegistry[T]) {
 	finalFeatures := PluginFeatures[T]{}
 	for _, feature := range features {
@@ -21,6 +21,7 @@ func FillRegistry[T any](features [][]func() PluginFeatures[T], targetRegistry *
 	}
 }
 
+// MapSlice maps elements in a slice from type T to type R using a converter function.
 func MapSlice[T any, R any](slice []T, mapper func(T) R) []R {
 	result := make([]R, len(slice))
 	for i, v := range slice {
@@ -29,6 +30,15 @@ func MapSlice[T any, R any](slice []T, mapper func(T) R) []R {
 	return result
 }
 
+// BuildAllRegistries executes mapping and populates all application registries using the slice of active plugins.
+// It sets up migrations, views, configs, DB hooks, routers, models, layers, and page templates.
+//
+// Use Cases:
+//   - Initializing registries at startup before starting the server.
+//
+// Example:
+//
+//	lamu.BuildAllRegistries(allActivePlugins)
 func BuildAllRegistries(allPlugins []registry.Pair[string, Plugin]) {
 	FillRegistry(MapSlice(allPlugins, func(pair registry.Pair[string, Plugin]) []func() PluginFeatures[UsefulFilesystem] {
 		return pair.Value.Migrations

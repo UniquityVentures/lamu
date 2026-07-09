@@ -8,9 +8,11 @@ import (
 	"strings"
 )
 
-// DecimalSix holds a monetary-style amount with exactly 6 decimal places
-// persisted as NUMERIC and represented in Go with *big.Rat.
+// DecimalSix represents a decimal numeric amount rounded to exactly 6 decimal places.
+// It is intended for high-precision monetary-style fields or coordinate points.
+// It maps to database NUMERIC storage columns and uses Go's standard [*big.Rat] representation.
 type DecimalSix struct {
+	// R represents the underlying high-precision big rational number value.
 	R *big.Rat
 }
 
@@ -20,7 +22,7 @@ var (
 	_ driver.Valuer            = DecimalSix{}
 )
 
-// NormalizeSixDecimals rounds R to exactly 6 decimal places
+// NormalizeDecimals yields a new DecimalSix structure with its big rational value rounded to exactly 6 decimal places.
 func (p DecimalSix) NormalizeDecimals() DecimalSix {
 	r := new(big.Rat)
 	if p.R == nil {
@@ -34,13 +36,13 @@ func (p DecimalSix) NormalizeDecimals() DecimalSix {
 	return DecimalSix{R: r}
 }
 
-// MarshalText implements encoding.TextMarshaler.
+// MarshalText serializes the rational number into a byte slice formatted with 6 decimal places.
 func (p DecimalSix) MarshalText() ([]byte, error) {
 	r := p.NormalizeDecimals().R
 	return []byte(r.FloatString(6)), nil
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler (mapstructure form binding).
+// UnmarshalText deserializes the byte slice formatted string into the high-precision rational number.
 func (p *DecimalSix) UnmarshalText(text []byte) error {
 	s := strings.TrimSpace(string(text))
 	if s == "" {
@@ -55,12 +57,12 @@ func (p *DecimalSix) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// Value implements driver.Valuer for GORM / SQL.
+// Value implements the database driver Valuer interface to save decimal numbers as numeric database strings.
 func (p DecimalSix) Value() (driver.Value, error) {
 	return p.NormalizeDecimals().R.FloatString(6), nil
 }
 
-// Scan implements sql.Scanner.
+// Scan implements the sql Scanner interface to populate decimal structures from database columns.
 func (p *DecimalSix) Scan(src any) error {
 	switch v := src.(type) {
 	case nil:
@@ -78,7 +80,7 @@ func (p *DecimalSix) Scan(src any) error {
 	}
 }
 
-// String returns a fixed 6-decimal string for UI.
+// String returns a formatted fixed 6-decimal string representation suitable for UI views.
 func (p DecimalSix) String() string {
 	b, err := p.MarshalText()
 	if err != nil {

@@ -11,47 +11,74 @@ import (
 	. "maragu.dev/gomponents/html"
 )
 
+// TableColumn represents a single column header and cell structure layout configuration.
 type TableColumn struct {
+	// Label represents the header label text displayed at the top of the column.
 	Label string
-	// Name is the column identifier used in the list view ?sort= query (e.g. "Name ASC").
-	// When non-empty, the list header cycles sort: ascending, descending, then clears ?sort=.
+	// Name represents the query parameter sort value mapping to this column (e.g. "Name ASC").
+	// Sorting headers are automatically enabled when this property is non-empty.
 	Name string
-	// Orderable is reserved; header sorting is enabled whenever Name is non-empty.
+	// Orderable is reserved for future sort config extensions.
 	Orderable bool
+	// Children represents the list of cell sub-components rendering inside this column's cells.
 	Children  []PageInterface
 }
 
+// TableDisplayBuilder defines the constructor callback type constructing list view mode components.
 type TableDisplayBuilder[T any] func([]TableColumn, getters.Getter[ObjectList[T]], getters.Getter[Node]) PageInterface
 
+// DataTable represents a responsive data grid list viewer component supporting paginated queries.
+// It displays database rows in multiple view modes (e.g. List, Grid) using Alpine.js, handles sorting, pagination controls,
+// dynamic column visibility filtering, and rendering toolbar action handlers.
+//
+// Use Cases:
+//   - Showing paginated resource collections (users, audit logs, devices) featuring query sorting and grid/list toggles.
+//
+// Example:
+//
+//	 &components.DataTable[User]{
+//	     Title:    "Accounts List",
+//	     Subtitle: "Manage system user credentials",
+//	     Columns: []components.TableColumn{
+//	         {Label: "Email Address", Name: "email"},
+//	         {Label: "Roles", Name: "roles"},
+//	     },
+//	     Data: userDataGetter,
+//	 }
 type DataTable[T any] struct {
+	// Page embeds common component properties like Key and Roles.
 	Page
+	// UID represents the unique HTML element wrapper ID (defaults to "table-container").
 	UID      string
+	// Columns represents the slice of TableColumn configurations.
 	Columns  []TableColumn
+	// Data represents the dynamic Getter retrieving the paginated ObjectList payload.
 	Data     getters.Getter[ObjectList[T]]
+	// Title represents the heading label text displayed above the table panel.
 	Title    string
+	// Subtitle represents the auxiliary description label text displayed below the title.
 	Subtitle string
+	// Classes represents additional CSS classes applied to the output HTML wrapper.
+	// (Discouraged: Use layout containers or theme styling instead of custom styling overrides).
 	Classes  string
-	// Displays is a map of view name to display component
-	// e.g. "List": TableListContent, "Grid": TableGridContent
+	// Displays maps view mode names (e.g. "List", "Grid") to their constructor callback builders.
 	Displays map[string]TableDisplayBuilder[T]
-	// DefaultView is the initial display mode; must match a key in Displays. Empty means "List".
+	// DefaultView represents the initial active view mode key (defaults to "List").
 	DefaultView string
-	// Actions are rendered in the toolbar after the view switcher (e.g. &TableButtonFilter{Child: ...}, &TableButtonCreate{Link: ...}).
+	// Actions represents custom toolbar action buttons rendered next to view switch controls.
 	Actions []PageInterface
-	// RowAttr is per-row TR / card attributes (classes, @click, :class). Resolved with $row and
-	// getters.ContextKeyTableDisplay set to list vs grid (use getters.RowAttrNavigate, RowAttrNavigateFormat,
-	// RowAttrSelect, RowAttrSelectMulti, RowAttrClickWithClass, etc.).
+	// RowAttr represents the dynamic getter returning TR/card attribute nodes.
 	RowAttr getters.Getter[Node]
-	// EnabledColumns optionally restricts visible columns: each key is [TableColumn.Name], value must be true.
-	// Nil getter, or a getter that returns (nil, nil), shows all columns. Columns with empty Name stay visible.
-	// Pair with views.LayerTableToggleColumns and GetterEnabledColumnsFromContext, or wire your own getter.
+	// EnabledColumns represents the dynamic getter returning the visible columns map filter.
 	EnabledColumns getters.Getter[map[string]bool]
 }
 
+// TableColumns returns the configuration list of table columns.
 func (e DataTable[T]) TableColumns() []TableColumn {
 	return e.Columns
 }
 
+// Build compiles the DataTable component into table headers, lists, grids, and view switchers.
 func (e DataTable[T]) Build(ctx context.Context) Node {
 	if e.Displays == nil {
 		e.Displays = map[string]TableDisplayBuilder[T]{
@@ -143,14 +170,17 @@ func (e DataTable[T]) Build(ctx context.Context) Node {
 	)
 }
 
+// GetKey returns the unique key identifier for this DataTable.
 func (e DataTable[T]) GetKey() string {
 	return e.Key
 }
 
+// GetRoles returns the authorized roles required to view this DataTable.
 func (e DataTable[T]) GetRoles() []string {
 	return e.Roles
 }
 
+// GetChildren returns the slice of nested sub-components.
 func (e DataTable[T]) GetChildren() []PageInterface {
 	children := make([]PageInterface, 0, len(e.Actions))
 	children = append(children, e.Actions...)
@@ -160,6 +190,7 @@ func (e DataTable[T]) GetChildren() []PageInterface {
 	return children
 }
 
+// SetChildren replaces the slice of nested sub-components.
 func (e *DataTable[T]) SetChildren(children []PageInterface) {
 	offset := 0
 	for i := range e.Actions {

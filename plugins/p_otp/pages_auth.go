@@ -46,7 +46,7 @@ func pageEntriesOtpAuth() []registry.Pair[string, components.PageInterface] {
 							Classes: "text-center mt-4",
 							Children: []components.PageInterface{
 								components.ButtonLink{
-									Label: "Back to Login",
+									Label: getters.Static("Back to Login"),
 									Link:  lamu.RoutePath("p_users.LoginRoute", nil),
 								},
 							},
@@ -94,7 +94,7 @@ func pageEntriesOtpAuth() []registry.Pair[string, components.PageInterface] {
 							Classes: "text-center mt-4",
 							Children: []components.PageInterface{
 								components.ButtonLink{
-									Label: "Back to Login",
+									Label: getters.Static("Back to Login"),
 									Link:  lamu.RoutePath("p_users.LoginRoute", nil),
 								},
 							},
@@ -168,7 +168,7 @@ func pageEntriesOtpAuth() []registry.Pair[string, components.PageInterface] {
 							Classes: "text-center mt-4",
 							Children: []components.PageInterface{
 								components.ButtonLink{
-									Label: "Cancel",
+									Label: getters.Static("Cancel"),
 									Link:  lamu.RoutePath("p_users.LoginRoute", nil),
 								},
 							},
@@ -205,12 +205,12 @@ func pageEntriesOtpAuth() []registry.Pair[string, components.PageInterface] {
 							Classes: "gap-2 mt-3",
 							Children: []components.PageInterface{
 								components.ButtonLink{
-									Label:   "Reset password with email",
+									Label:   getters.Static("Reset password with email"),
 									Link:    lamu.RoutePath("otp.EmailOtpRequestRoute", nil),
 									Classes: "w-full",
 								},
 								components.ButtonLink{
-									Label:   "Reset password with phone number",
+									Label:   getters.Static("Reset password with phone number"),
 									Link:    lamu.RoutePath("otp.PhoneOtpRequestRoute", nil),
 									Classes: "w-full",
 								},
