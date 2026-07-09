@@ -8,6 +8,38 @@ For detailed package documentation, check out the [Lamu Go Reference](https://pk
 
 ## Quickstart
 
+
+### Database Setup (PostgreSQL)
+
+To use PostgreSQL with Lamu:
+
+1. **Install PostgreSQL**:
+   - **Linux (Ubuntu/Debian)**: Run `sudo apt update && sudo apt install postgresql postgresql-contrib`
+   - **macOS**: Run `brew install postgresql`
+   - **Windows**: Download and run the installer from the [PostgreSQL Official Downloads Page](https://www.postgresql.org/download/).
+
+2. **Start the PostgreSQL Service**:
+   - **Linux**: Run `sudo systemctl start postgresql`
+   - **macOS**: Run `brew services start postgresql`
+
+3. **Create a Database User and Database**:
+   Access the PostgreSQL prompt:
+   - **Linux/macOS**: Run:
+     ```bash
+     sudo -u postgres psql
+     ```
+   - **Windows**: Launch **SQL Shell (psql)** from the Start Menu, or open Command Prompt/PowerShell and run:
+     ```cmd
+     psql -U postgres
+     ```
+     *(If `psql` is not in your system PATH, run it from the installation directory, e.g., `"C:\Program Files\PostgreSQL\<version>\bin\psql.exe" -U postgres`)*
+   Run the following SQL commands to create a user and database:
+   ```sql
+   CREATE USER lamu_user WITH PASSWORD 'secure_password';
+   CREATE DATABASE lamu_db OWNER lamu_user;
+   \q
+   ```
+
 Create a empty go project named lamu_test
 
 ```bash
@@ -21,16 +53,18 @@ Create an empty main.go, and an empty config.toml file
 
 ```bash
 touch main.go
+touch config.toml
 ```
 
-To configure for a basic sqlite deployment, put the following in config.toml:
+In config.toml, put the following to connect with the postgres server configured above:
+
 ```toml
 Debug = true
-DBType = "Sqlite"
+DBType = "Postgres"
 Address = ":42069"
 
-[SqliteConfig]
-  DSN = "lamu_database.db"
+[PostgresConfig]
+  DSN = "host=localhost user=lamu_user password=secure_password dbname=lamu_db port=5432 sslmode=disable TimeZone=Asia/Kolkata"
 
 [plugins.p_pwa]
   # If set, /serviceworker.js will serve this file. If empty, p_pwa serves a minimal default.
@@ -52,7 +86,6 @@ Address = ":42069"
   PWA_APP_STATUS_BAR_COLOR = "default"
   PWA_APP_DIR = "ltr"
   PWA_APP_LANG = "en-US"
-
 ```
 
 To initialize a Lamu application by registering active plugins, loading configuration values from a TOML file, and executing the CLI entrypoint, put the following in main.go
@@ -92,6 +125,7 @@ To run,
 
 ```bash
 go mod tidy
+go run main.go generate
 go run main.go
 ```
 
