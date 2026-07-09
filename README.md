@@ -13,6 +13,7 @@ Create a empty go project named lamu_test
 ```bash
 mkdir lamu_test
 go mod init lamu_test
+go get github.com/UniquityVentures/lamu@latest
 ```
 
 Create an empty main.go, and an empty config.toml file
