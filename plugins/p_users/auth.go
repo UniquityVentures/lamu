@@ -46,8 +46,8 @@ func Authenticate(db *gorm.DB, email, password string) (*User, error) {
 type AuthConfig struct {
 	SigningKey    string `toml:"signingKey"`
 	JwtIssuer     string `toml:"jwtIssuer"`
-	AdminEmail    string `toml:"admin_email"`
-	AdminPassword string `toml:"admin_password"`
+	AdminEmail    string `toml:"adminEmail"`
+	AdminPassword string `toml:"adminPassword"`
 }
 
 var Config = &AuthConfig{}
