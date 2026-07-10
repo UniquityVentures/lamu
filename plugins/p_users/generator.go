@@ -112,10 +112,19 @@ func GenerateUserWithoutPassword(db *gorm.DB, roleName string) (*User, error) {
 	return new(user), nil
 }
 
-// CreateOverallSuperuser idempotently creates the system superuser (superadmin@lariv.in).
+// CreateOverallSuperuser idempotently creates the system superuser using the configured admin_email and admin_password.
+// If either email or password is not set, it skips superuser generation.
 // Returns the existing user if already present.
 func CreateOverallSuperuser(db *gorm.DB) (*User, error) {
-	existing, err := gorm.G[User](db).Where("email = ?", "superadmin@lariv.in").First(context.Background())
+	adminEmail := Config.AdminEmail
+	adminPassword := Config.AdminPassword
+
+	if adminEmail == "" || adminPassword == "" {
+		fmt.Println("Admin email or password not set, skipping superuser creation")
+		return nil, nil
+	}
+
+	existing, err := gorm.G[User](db).Where("email = ?", adminEmail).First(context.Background())
 	if err == nil {
 		fmt.Println("Overall superuser already exists")
 		return new(existing), nil
@@ -126,8 +135,8 @@ func CreateOverallSuperuser(db *gorm.DB) (*User, error) {
 
 	user := User{
 		Name:        "Super Admin",
-		Email:       "superadmin@lariv.in",
-		Password:    []byte(defaultPassword),
+		Email:       adminEmail,
+		Password:    []byte(adminPassword),
 		IsSuperuser: true,
 		RoleID:      role.ID,
 	}
