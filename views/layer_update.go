@@ -33,11 +33,11 @@ import (
 //	}
 type LayerUpdate[T any] struct {
 	// Key represents the context key pointing to the target loaded record to update.
-	Key           getters.Getter[string]
+	Key getters.Getter[string]
 	// SuccessURL represents the dynamic Getter resolving to the redirection target URL upon successful updates.
-	SuccessURL    getters.Getter[string]
+	SuccessURL getters.Getter[string]
 	// FormPatchers represents the collection of patch middleware rules to apply to form maps before updates.
-	FormPatchers  FormPatchers
+	FormPatchers FormPatchers
 	// QueryPatchers represents the slice of query modifications to restrict update scopes.
 	QueryPatchers QueryPatchers[T]
 }
@@ -110,12 +110,7 @@ func (m LayerUpdate[T]) Next(view View, next http.Handler) http.Handler {
 					stmt.Model = &record
 				}).Where("id = ?", id)
 				updateQuery = m.QueryPatchers.Apply(view, r, updateQuery)
-				// Update column-by-column so nil/empty parsed values persist as SQL NULL.
-				for field, value := range regularValues {
-					if _, err := updateQuery.Update(ctx, field, value); err != nil {
-						return err
-					}
-				}
+				updateQuery.Updates(ctx, record)
 			}
 
 			return applyAssociationReplacements(tx, &record, associationValues)

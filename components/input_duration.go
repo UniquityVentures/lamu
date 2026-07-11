@@ -121,7 +121,7 @@ func (e InputDuration) Parse(v any, _ context.Context) (any, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid duration")
 	}
-	return new(d), nil
+	return &d, nil
 }
 
 // GetName returns the HTML form element's name attribute value.

@@ -83,7 +83,7 @@ func GenerateUser(db *gorm.DB, roleName string) (*User, error) {
 	if err := gorm.G[User](db).Create(context.Background(), &user); err != nil {
 		return nil, err
 	}
-	return new(user), nil
+	return &user, nil
 }
 
 // GenerateUserWithoutPassword creates a user with realistic Indian data but no password.
@@ -109,7 +109,7 @@ func GenerateUserWithoutPassword(db *gorm.DB, roleName string) (*User, error) {
 	if err := gorm.G[User](db).Create(context.Background(), &user); err != nil {
 		return nil, err
 	}
-	return new(user), nil
+	return &user, nil
 }
 
 // CreateOverallSuperuser idempotently creates the system superuser using the configured admin_email and admin_password.
@@ -127,7 +127,7 @@ func CreateOverallSuperuser(db *gorm.DB) (*User, error) {
 	existing, err := gorm.G[User](db).Where("email = ?", adminEmail).First(context.Background())
 	if err == nil {
 		fmt.Println("Overall superuser already exists")
-		return new(existing), nil
+		return &existing, nil
 	}
 
 	role := Role{Name: "superuser"}
@@ -144,7 +144,7 @@ func CreateOverallSuperuser(db *gorm.DB) (*User, error) {
 		return nil, err
 	}
 	fmt.Println("Created overall superuser")
-	return new(user), nil
+	return &user, nil
 }
 
 func pluginGenerators() lamu.PluginFeatures[lamu.Generator] {

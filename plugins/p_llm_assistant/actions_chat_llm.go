@@ -32,9 +32,10 @@ If a tool response includes an error, explain it briefly and suggest a fix.`
 
 func assistantChatGenConfig(maxOut int) *genai.GenerateContentConfig {
 	maxTok := max(int32(maxOut), 1)
+	temp := float32(0.35)
 	return &genai.GenerateContentConfig{
 		SystemInstruction: genai.NewContentFromText(assistantSystemPrompt, genai.RoleUser),
-		Temperature:       new(float32(0.35)),
+		Temperature:       &temp,
 		MaxOutputTokens:   maxTok,
 		Tools:             assistantGeminiTools(),
 		ToolConfig: &genai.ToolConfig{

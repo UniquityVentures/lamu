@@ -81,7 +81,7 @@ func GeneratePhotoFile(db *gorm.DB) (*VNode, error) {
 		return nil, nil
 	}
 	picked := files[rand.Intn(len(files))]
-	return new(picked), nil
+	return &picked, nil
 }
 
 func pluginGenerators() lamu.PluginFeatures[lamu.Generator] {

@@ -40,7 +40,7 @@ func Authenticate(db *gorm.DB, email, password string) (*User, error) {
 		return nil, errors.New("Could not authenticate user")
 	}
 
-	return new(user), nil
+	return &user, nil
 }
 
 type AuthConfig struct {

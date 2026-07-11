@@ -40,8 +40,9 @@ func NewSchema[T any]() *genai.Schema {
 				Type:   genai.TypeString,
 				Format: "date-time",
 			}
+			trueVal := true
 			if nullable {
-				schema.Nullable = new(true)
+				schema.Nullable = &trueVal
 			}
 			return schema
 		}
@@ -53,9 +54,10 @@ func NewSchema[T any]() *genai.Schema {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			schema = &genai.Schema{Type: genai.TypeInteger}
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+			zeroFloat := float64(0)
 			schema = &genai.Schema{
 				Type:    genai.TypeInteger,
-				Minimum: new(float64(0)),
+				Minimum: &zeroFloat,
 			}
 		case reflect.Float32:
 			schema = &genai.Schema{
@@ -91,7 +93,8 @@ func NewSchema[T any]() *genai.Schema {
 		}
 
 		if nullable {
-			schema.Nullable = new(true)
+			trueVal := true
+			schema.Nullable = &trueVal
 		}
 
 		return schema

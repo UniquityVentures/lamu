@@ -84,7 +84,7 @@ func vnodeFromContext(r *http.Request) (*VNode, error) {
 	if !ok {
 		return nil, fmt.Errorf("missing vnode in context")
 	}
-	return new(node), nil
+	return &node, nil
 }
 
 func optionalNodeFromValue(db *gorm.DB, value any, fallback *VNode) (*VNode, error) {

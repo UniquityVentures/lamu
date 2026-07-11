@@ -30,7 +30,7 @@ func (p *PageURL) URLPtr() *url.URL {
 	if p == nil || p.Host == "" {
 		return nil
 	}
-	return new(p.URL)
+	return &p.URL
 }
 
 // SetFromURL overrides the embedded URL properties using fields from the provided *url.URL object.

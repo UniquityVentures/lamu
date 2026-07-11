@@ -121,7 +121,8 @@ func (a AdminPanel[T]) EditableFields() []string {
 		t = t.Elem()
 	}
 	var fields []string
-	for f := range t.Fields() {
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
 		if !f.IsExported() || f.Anonymous {
 			continue
 		}
