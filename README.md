@@ -86,6 +86,10 @@ Address = ":42069"
   PWA_APP_STATUS_BAR_COLOR = "default"
   PWA_APP_DIR = "ltr"
   PWA_APP_LANG = "en-US"
+
+[plugins.p_users]
+adminEmail = "superadmin@test.com"
+adminPassword = "SuperadminPassword1234"
 ```
 
 To initialize a Lamu application by registering active plugins, loading configuration values from a TOML file, and executing the CLI entrypoint, put the following in main.go
@@ -128,6 +132,12 @@ go mod tidy
 go run main.go generate
 go run main.go
 ```
+
+You can now login using the following credentials:
+
+Email: superadmin@test.com
+Password: SuperadminPassword1234
+
 
 ## Features
 
