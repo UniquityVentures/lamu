@@ -211,4 +211,8 @@
 //   - Pure: Do not mutate input arguments in place. Return a copy or new value if modifying pointer fields.
 //   - Idempotent: Patch application must yield equivalent results if run multiple times (verify keys before appends).
 //   - Merge Safety: Features merges execute in sequence. Package state variables must not be mutated.
+//
+// # Next Steps
+//
+// For a detailed breakdown of the application file structure, standard plugin files (app.go, config.go, pages.go, migrations.go, routes.go, models.go, views.go, commands.go), and architectural concepts (layers.go, components.go, querypatchers.go), refer to the documentation package: [github.com/UniquityVentures/lamu/docs].
 package lamu

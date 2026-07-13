@@ -144,3 +144,9 @@ Password: SuperadminPassword1234
 - **Plugin Registries**: Package database models, pages, API routes, and configs inside modular plugin boundaries.
 - **Transactional View Layers**: Compose request pipelines with built-in or custom middleware layers to handle detail loading, form updates, and deletions.
 - **Goose Migrations**: Keep SQL database migrations decoupled and isolated inside plugin subdirectory systems.
+
+## Next Steps & Documentation
+
+For detailed package documentation and guides, check out:
+- [Lamu Go Reference](https://pkg.go.dev/github.com/UniquityVentures/lamu/lamu)
+- [Lamu Documentation Package](https://pkg.go.dev/github.com/UniquityVentures/lamu/docs): Explains the application directory structure, standard plugin files (`app.go`, `config.go`, `pages.go`, `migrations.go`, `routes.go`, `models.go`, `views.go`, `commands.go`), and architectural concepts (`layers.go`, `components.go`, `querypatchers.go`).
