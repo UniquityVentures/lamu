@@ -1,48 +1,12 @@
-// Package quickstart contains explanations, quickstart guides, and code examples for bootstrapping a Lamu application.
+// Package quickstart guides you through building a minimal Lamu plugin that renders "Hello, World!".
 //
-// # Quickstart
+// # Creating a Hello World Plugin
 //
-// To bootstrap a Lamu application, create a main entry file (e.g. main.go) loading active plugins
-// and calling the CLI bootstrapper:
+// Follow this step-by-step tutorial to define a plugin, route, view, page component, and bootstrap the server.
 //
-//	package main
+// # Step 1: Create the Plugin Entrypoint (app.go)
 //
-//	import (
-//		"log"
-//
-//		"github.com/UniquityVentures/lamu/lamu"
-//		"github.com/UniquityVentures/lamu/plugins/p_dashboard"
-//		"github.com/UniquityVentures/lamu/plugins/p_users"
-//		"github.com/UniquityVentures/lamu/registry"
-//	)
-//
-//	func main() {
-//		// 1. Register the list of active plugins to load into the application kernel.
-//		plugins := []registry.Pair[string, lamu.Plugin]{
-//			p_dashboard.GetPlugin(),
-//			p_users.GetPlugin(),
-//		}
-//
-//		// 2. Load database settings, server addresses, and plugin parameters from config.toml.
-//		config, err := lamu.LoadConfigFromFile("config.toml", plugins)
-//		if err != nil {
-//			log.Fatalf("failed loading configuration file: %v", err)
-//		}
-//
-//		// 3. Build global registries and run the Cobra CLI bootstrapper.
-//		if err := lamu.Start(config, plugins); err != nil {
-//			log.Fatalf("failed executing application entry: %v", err)
-//		}
-//	}
-//
-// Line-by-line Breakdown:
-//   - Step 1: Defines a slice of [registry.Pair] mapping plugin names to their [lamu.Plugin] configurations.
-//   - Step 2: Calls [lamu.LoadConfigFromFile] to decode configurations, open GORM connections, and execute initial schemas.
-//   - Step 3: Invokes [lamu.Start] to initialize the CLI command tree (Root starts the server, generate seeds, tui boots TUI).
-//
-// # Minimal Plugin
-//
-// Plugins are discrete packages exposing a GetPlugin function returning a [registry.Pair] of plugin name and [lamu.Plugin]:
+// Every plugin must define a key, type, and verbose name. If the plugin type is PluginTypeApp (a standalone application), it also specifies a landing URL and dashboard icon. Start by creating a minimal app.go file:
 //
 //	package myplugin
 //
@@ -54,162 +18,210 @@
 //	)
 //
 //	func GetPlugin() registry.Pair[string, lamu.Plugin] {
-//		return registry.NewPair("myplugin", lamu.Plugin{
-//			Type:        lamu.PluginTypeApp,
-//			VerboseName: "Inventory Manager",
-//			Icon:        "box",
-//			URL: &url.URL{
-//				Path: "/inventory/",
+//		u, _ := url.Parse("/hello/")
+//		return registry.Pair[string, lamu.Plugin]{
+//			Key: "myplugin",
+//			Value: lamu.Plugin{
+//				Type:        lamu.PluginTypeApp,
+//				VerboseName: "Hello Plugin",
+//				Icon:        "sparkles",
+//				URL:         u,
 //			},
-//		})
+//		}
 //	}
 //
-// Explanation:
-//   - Type: Specifies [lamu.PluginTypeApp] for standalone logic, [lamu.PluginTypeAddon] (which hides the plugin from the dashboard's app grid), or [lamu.PluginTypeService].
-//   - VerboseName & Icon: Defines the display name and icon used on the admin landing page.
-//   - URL: Represents the primary landing URL path pointing to the plugin home view.
+// # Step 2: Add HTTP Routing (routes.go)
 //
-// # Adding Routes
-//
-// To register endpoint paths, implement a Route entry under [lamu.Plugin.Routes] returning page layouts:
+// Define the path routes supported by your plugin. Create a routes.go file:
 //
 //	package myplugin
 //
 //	import (
-//		"context"
-//		"net/http"
-//
-//		"github.com/UniquityVentures/lamu/components"
 //		"github.com/UniquityVentures/lamu/lamu"
 //		"github.com/UniquityVentures/lamu/registry"
-//		. "maragu.dev/gomponents"
-//		"maragu.dev/gomponents/html"
 //	)
 //
-//	type HelloPage struct {
-//		components.Page
-//	}
-//
-//	func (p HelloPage) Build(ctx context.Context) Node {
-//		return html.Div(html.H1(Text("Hello, World!")))
-//	}
-//
-//	func GetPlugin() registry.Pair[string, lamu.Plugin] {
-//		return registry.NewPair("hello_plugin", lamu.Plugin{
-//			Type:        lamu.PluginTypeApp,
-//			VerboseName: "Hello Plugin",
-//			Pages: lamu.PluginStages(func() lamu.PluginFeatures[components.PageInterface] {
-//				return lamu.PluginFeatures[components.PageInterface]{
-//					Entries: []registry.Pair[string, components.PageInterface]{
-//						registry.NewPair("myplugin.hello", HelloPage{}),
+//	func pluginRoutes() lamu.PluginFeatures[lamu.Route] {
+//		return lamu.PluginFeatures[lamu.Route]{
+//			Entries: []registry.Pair[string, lamu.Route]{
+//				{
+//					Key: "myplugin.hello_route",
+//					Value: lamu.Route{
+//						Path:    "/hello/",
+//						Handler: lamu.NewDynamicView("myplugin.hello_view"),
 //					},
-//				}
-//			}),
-//			Routes: lamu.PluginStages(func() lamu.PluginFeatures[lamu.Route] {
-//				return lamu.PluginFeatures[lamu.Route]{
-//					Entries: []registry.Pair[string, lamu.Route]{
-//						registry.NewPair("hello_route", lamu.Route{
-//							Path:    "/hello/",
-//							Handler: lamu.GetPageView("myplugin.hello"),
-//						}),
-//					},
-//				}
-//			}),
-//		})
+//				},
+//			},
+//		}
 //	}
 //
-// Explanation:
-//   - [components.PageInterface] represents visual layout templates containing HTML elements structure.
-//   - [lamu.GetPageView] constructs standard view controller handlers referencing page keys in the registry.
-//   - [lamu.Route] maps paths to handlers, dynamically resolving wildcard parameters if path segments match.
-//
-// # Adding Views and Layers
-//
-// Views wrap page components in middleware pipeline layers. Here is an example of mapping custom middlewares:
+// Now, update your app.go file to register the routes feature stage:
 //
 //	package myplugin
 //
 //	import (
-//		"log"
-//		"net/http"
+//		"net/url"
 //
+//		"github.com/UniquityVentures/lamu/lamu"
+//		"github.com/UniquityVentures/lamu/registry"
+//	)
+//
+//	func GetPlugin() registry.Pair[string, lamu.Plugin] {
+//		u, _ := url.Parse("/hello/")
+//		return registry.Pair[string, lamu.Plugin]{
+//			Key: "myplugin",
+//			Value: lamu.Plugin{
+//				Type:        lamu.PluginTypeApp,
+//				VerboseName: "Hello Plugin",
+//				Icon:        "sparkles",
+//				URL:         u,
+//				Routes:      lamu.PluginStages(pluginRoutes),
+//			},
+//		}
+//	}
+//
+// # Step 3: Add the View Controller (views.go)
+//
+// Views act as controllers that link route paths to target pages. Create a views.go file:
+//
+//	package myplugin
+//
+//	import (
 //		"github.com/UniquityVentures/lamu/lamu"
 //		"github.com/UniquityVentures/lamu/registry"
 //		"github.com/UniquityVentures/lamu/views"
 //	)
 //
-//	type LogLayer struct{}
-//
-//	func (l LogLayer) Next(view views.View, next http.Handler) http.Handler {
-//		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//			log.Printf("Executing view page: %s", view.PageName)
-//			next.ServeHTTP(w, r)
-//		})
+//	func pluginViews() lamu.PluginFeatures[*views.View] {
+//		return lamu.PluginFeatures[*views.View]{
+//			Entries: []registry.Pair[string, *views.View]{
+//				{
+//					Key:   "myplugin.hello_view",
+//					Value: lamu.GetPageView("myplugin.hello_page"),
+//				},
+//			},
+//		}
 //	}
 //
-//	func GetPlugin() registry.Pair[string, lamu.Plugin] {
-//		myView := lamu.GetPageView("myplugin.hello").
-//			WithLayer("logger", LogLayer{})
+// Update your app.go file to register both routes and views feature stages:
 //
-//		return registry.NewPair("views_plugin", lamu.Plugin{
-//			Type:        lamu.PluginTypeApp,
-//			VerboseName: "Views Plugin",
-//			Views: lamu.PluginStages(func() lamu.PluginFeatures[*views.View] {
-//				return lamu.PluginFeatures[*views.View]{
-//					Entries: []registry.Pair[string, *views.View]{
-//						registry.NewPair("hello_view", myView),
-//					},
-//				}
-//			}),
-//		})
-//	}
-//
-// Other available view layers:
-//   - [views.LayerDetail]: Loads database records by context key indicators.
-//   - [views.LayerUpdate]: Updates database rows inside transactions on POST request actions.
-//   - [views.LayerCreate]: Inserts new database records on POST request actions.
-//   - [views.LayerDelete]: Deletes database records on POST request actions.
-//   - [views.LayerList]: Queries database collections lists mapping them to data lists.
-//   - [views.LayerSingleton]: Manages site configurations single-row databases entries.
-//
-// # Patching Existing Features of a Plugin
-//
-// Plugins can modify pages, views, or configurations registered by other plugins using Patches:
-//
-//	package myaddon
+//	package myplugin
 //
 //	import (
-//		"github.com/UniquityVentures/lamu/components"
+//		"net/url"
+//
 //		"github.com/UniquityVentures/lamu/lamu"
 //		"github.com/UniquityVentures/lamu/registry"
 //	)
 //
 //	func GetPlugin() registry.Pair[string, lamu.Plugin] {
-//		return registry.NewPair("dashboard_decorator", lamu.Plugin{
-//			Type:        lamu.PluginTypeAddon,
-//			VerboseName: "Dashboard Decorator",
-//			Pages: lamu.PluginStages(func() lamu.PluginFeatures[components.PageInterface] {
-//				return lamu.PluginFeatures[components.PageInterface]{
-//					Patches: []registry.Pair[string, func(components.PageInterface) components.PageInterface]{
-//						registry.NewPair("p_dashboard.home", func(existing components.PageInterface) components.PageInterface {
-//							// Verify insertion element doesn't exist yet to maintain idempotency
-//							if components.HasChild(existing, "patched_banner") {
-//								return existing
-//							}
-//							banner := components.Header{Key: "patched_banner", Title: "Patched Dashboard"}
-//							return components.InsertChildFirst(existing, banner)
-//						}),
-//					},
-//				}
-//			}),
-//		})
+//		u, _ := url.Parse("/hello/")
+//		return registry.Pair[string, lamu.Plugin]{
+//			Key: "myplugin",
+//			Value: lamu.Plugin{
+//				Type:        lamu.PluginTypeApp,
+//				VerboseName: "Hello Plugin",
+//				Icon:        "sparkles",
+//				URL:         u,
+//				Routes:      lamu.PluginStages(pluginRoutes),
+//				Views:       lamu.PluginStages(pluginViews),
+//			},
+//		}
 //	}
 //
-// Purity and Idempotency Rules:
+// # Step 4: Create the Page Layout (pages.go)
 //
-//   - Pure: Do not mutate input arguments in place. Return a copy or new value if modifying pointer fields.
-//   - Idempotent: Patch application must yield equivalent results if run multiple times (verify keys before appends).
-//   - Merge Safety: Features merges execute in sequence. Package state variables must not be mutated.
+// Pages render the final HTML output. Define a struct implementing components.PageInterface. Create a pages.go file:
+//
+//	package myplugin
+//
+//	import (
+//		"context"
+//
+//		"github.com/UniquityVentures/lamu/components"
+//		"github.com/UniquityVentures/lamu/registry"
+//		"maragu.dev/gomponents"
+//		"maragu.dev/gomponents/html"
+//	)
+//
+//	type HelloPage struct {
+//		components.Page // Embeds Key and Roles field helpers
+//	}
+//
+//	func (p HelloPage) Build(ctx context.Context) gomponents.Node {
+//		return html.Div(
+//			html.H1(gomponents.Text("Hello, World!")),
+//		)
+//	}
+//
+//	func pluginPages() lamu.PluginFeatures[components.PageInterface] {
+//		return lamu.PluginFeatures[components.PageInterface]{
+//			Entries: []registry.Pair[string, components.PageInterface]{
+//				{
+//					Key:   "myplugin.hello_page",
+//					Value: HelloPage{},
+//				},
+//			},
+//		}
+//	}
+//
+// Finally, update your app.go file to register pages, routes, and views feature stages:
+//
+//	package myplugin
+//
+//	import (
+//		"net/url"
+//
+//		"github.com/UniquityVentures/lamu/lamu"
+//		"github.com/UniquityVentures/lamu/registry"
+//	)
+//
+//	func GetPlugin() registry.Pair[string, lamu.Plugin] {
+//		u, _ := url.Parse("/hello/")
+//		return registry.Pair[string, lamu.Plugin]{
+//			Key: "myplugin",
+//			Value: lamu.Plugin{
+//				Type:        lamu.PluginTypeApp,
+//				VerboseName: "Hello Plugin",
+//				Icon:        "sparkles",
+//				URL:         u,
+//				Pages:       lamu.PluginStages(pluginPages),
+//				Routes:      lamu.PluginStages(pluginRoutes),
+//				Views:       lamu.PluginStages(pluginViews),
+//			},
+//		}
+//	}
+//
+// # Step 5: Bootstrap the Server (main.go)
+//
+// Load your plugin list inside main.go and bootstrap the kernel server engine:
+//
+//	package main
+//
+//	import (
+//		"log"
+//
+//		"github.com/UniquityVentures/lamu/lamu"
+//		"github.com/UniquityVentures/lamu/registry"
+//		"myproject/myplugin" // import path to your new plugin
+//	)
+//
+//	func main() {
+//		plugins := []registry.Pair[string, lamu.Plugin]{
+//			myplugin.GetPlugin(),
+//		}
+//
+//		config, err := lamu.LoadConfigFromFile("config.toml", plugins)
+//		if err != nil {
+//			log.Fatalf("failed to load configuration: %v", err)
+//		}
+//
+//		if err := lamu.Start(config, plugins); err != nil {
+//			log.Fatalf("failed to start server: %v", err)
+//		}
+//	}
+//
+// Once the server starts, it will print the local server URL to your console. Open that address in your browser (e.g. http://localhost:8080/hello/) to view the Hello World page.
 //
 // # Next Steps
 //
