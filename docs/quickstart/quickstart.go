@@ -1,5 +1,4 @@
-// Package lamu is the application kernel: configuration loading, HTTP server wiring,
-// and aggregated plugin registries (pages, views, routes, models, migrations, etc.).
+// Package quickstart contains explanations, quickstart guides, and code examples for bootstrapping a Lamu application.
 //
 // # Quickstart
 //
@@ -37,13 +36,13 @@
 //	}
 //
 // Line-by-line Breakdown:
-//   - Step 1: Defines a slice of [registry.Pair] mapping plugin names to their [Plugin] configurations.
-//   - Step 2: Calls [LoadConfigFromFile] to decode configurations, open GORM connections, and execute initial schemas.
-//   - Step 3: Invokes [Start] to initialize the CLI command tree (Root starts the server, generate seeds, tui boots TUI).
+//   - Step 1: Defines a slice of [registry.Pair] mapping plugin names to their [lamu.Plugin] configurations.
+//   - Step 2: Calls [lamu.LoadConfigFromFile] to decode configurations, open GORM connections, and execute initial schemas.
+//   - Step 3: Invokes [lamu.Start] to initialize the CLI command tree (Root starts the server, generate seeds, tui boots TUI).
 //
 // # Minimal Plugin
 //
-// Plugins are discrete packages exposing a GetPlugin function returning a [registry.Pair] of plugin name and [Plugin]:
+// Plugins are discrete packages exposing a GetPlugin function returning a [registry.Pair] of plugin name and [lamu.Plugin]:
 //
 //	package myplugin
 //
@@ -66,13 +65,13 @@
 //	}
 //
 // Explanation:
-//   - Type: Specifies [PluginTypeApp] for standalone logic, [PluginTypeAddon] (which hides the plugin from the dashboard's app grid), or [PluginTypeService].
+//   - Type: Specifies [lamu.PluginTypeApp] for standalone logic, [lamu.PluginTypeAddon] (which hides the plugin from the dashboard's app grid), or [lamu.PluginTypeService].
 //   - VerboseName & Icon: Defines the display name and icon used on the admin landing page.
 //   - URL: Represents the primary landing URL path pointing to the plugin home view.
 //
 // # Adding Routes
 //
-// To register endpoint paths, implement a Route entry under [Plugin.Routes] returning page layouts:
+// To register endpoint paths, implement a Route entry under [lamu.Plugin.Routes] returning page layouts:
 //
 //	package myplugin
 //
@@ -121,8 +120,8 @@
 //
 // Explanation:
 //   - [components.PageInterface] represents visual layout templates containing HTML elements structure.
-//   - [GetPageView] constructs standard view controller handlers referencing page keys in [RegistryPage].
-//   - [Route] maps paths to handlers, dynamically resolving wildcard parameters if path segments match.
+//   - [lamu.GetPageView] constructs standard view controller handlers referencing page keys in the registry.
+//   - [lamu.Route] maps paths to handlers, dynamically resolving wildcard parameters if path segments match.
 //
 // # Adding Views and Layers
 //
@@ -215,4 +214,4 @@
 // # Next Steps
 //
 // For a detailed breakdown of the application file structure, standard plugin files (app.go, config.go, pages.go, migrations.go, routes.go, models.go, views.go, commands.go), and architectural concepts (layers.go, components.go, querypatchers.go), refer to the documentation package: [github.com/UniquityVentures/lamu/docs].
-package lamu
+package quickstart

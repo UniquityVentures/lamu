@@ -4,7 +4,7 @@
 
 Lamu is a modular, plugin-based web application framework for Go. It features dynamic registry-based layouts, hot-reloadable plugin features, transactional views, and database schema migrations managed per plugin.
 
-For detailed package documentation, check out the [Lamu Go Reference](https://pkg.go.dev/github.com/UniquityVentures/lamu/lamu).
+For a detailed bootstrapping guide, check out the [Lamu Quickstart Guide](https://pkg.go.dev/github.com/UniquityVentures/lamu/docs/quickstart).
 
 ## Quickstart
 
@@ -148,5 +148,5 @@ Password: SuperadminPassword1234
 ## Next Steps & Documentation
 
 For detailed package documentation and guides, check out:
-- [Lamu Go Reference](https://pkg.go.dev/github.com/UniquityVentures/lamu/lamu)
+- [Lamu Quickstart Guide](https://pkg.go.dev/github.com/UniquityVentures/lamu/docs/quickstart): Detailed guide on bootstrapping and building modular plugins.
 - [Lamu Documentation Package](https://pkg.go.dev/github.com/UniquityVentures/lamu/docs): Explains the application directory structure, standard plugin files (`app.go`, `config.go`, `pages.go`, `migrations.go`, `routes.go`, `models.go`, `views.go`, `commands.go`), and architectural concepts (`layers.go`, `components.go`, `querypatchers.go`).
