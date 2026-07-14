@@ -9,11 +9,22 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/UniquityVentures/lamu/components"
 	"github.com/UniquityVentures/lamu/getters"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+)
+
+type schemaCacheEntry struct {
+	rootSchema   *schema.Schema
+	fieldByParam map[string]*schema.Field
+}
+
+var (
+	schemaCache   = make(map[reflect.Type]*schemaCacheEntry)
+	schemaCacheMu sync.RWMutex
 )
 
 // LayerList manages paginated database queries and column sorting/filtering operations for collections of type T.
@@ -64,20 +75,38 @@ func (m LayerList[T]) Next(view View, next http.Handler) http.Handler {
 		}
 		var query gorm.ChainInterface[T] = gorm.G[T](db).Scopes()
 
-		var rootSchema *schema.Schema
-		fieldByParam := map[string]*schema.Field{}
-		if stmt := (&gorm.Statement{DB: db}); stmt.Parse(new(T)) == nil && stmt.Schema != nil {
-			rootSchema = stmt.Schema
-			for _, f := range stmt.Schema.Fields {
-				if f.DBName == "" {
-					continue
+		tType := reflect.TypeOf((*T)(nil)).Elem()
+		schemaCacheMu.RLock()
+		cache, ok := schemaCache[tType]
+		schemaCacheMu.RUnlock()
+		if !ok {
+			schemaCacheMu.Lock()
+			cache, ok = schemaCache[tType]
+			if !ok {
+				var rootSchema *schema.Schema
+				fieldByParam := map[string]*schema.Field{}
+				if stmt := (&gorm.Statement{DB: db}); stmt.Parse(new(T)) == nil && stmt.Schema != nil {
+					rootSchema = stmt.Schema
+					for _, f := range stmt.Schema.Fields {
+						if f.DBName == "" {
+							continue
+						}
+						keyName := strings.ToLower(f.Name)
+						keyDB := strings.ToLower(f.DBName)
+						fieldByParam[keyName] = f
+						fieldByParam[keyDB] = f
+					}
 				}
-				keyName := strings.ToLower(f.Name)
-				keyDB := strings.ToLower(f.DBName)
-				fieldByParam[keyName] = f
-				fieldByParam[keyDB] = f
+				cache = &schemaCacheEntry{
+					rootSchema:   rootSchema,
+					fieldByParam: fieldByParam,
+				}
+				schemaCache[tType] = cache
 			}
+			schemaCacheMu.Unlock()
 		}
+		rootSchema := cache.rootSchema
+		fieldByParam := cache.fieldByParam
 		pageStr := r.URL.Query().Get("page")
 		pageNum := uint(1)
 		if pageStr != "" {

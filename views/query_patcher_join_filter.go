@@ -3,13 +3,33 @@ package views
 import (
 	"log/slog"
 	"net/http"
+	"reflect"
+	"sync"
 
 	"github.com/UniquityVentures/lamu/components"
 	"github.com/UniquityVentures/lamu/getters"
 	"gorm.io/gorm"
 )
 
+var (
+	joinFilterCache   = make(map[reflect.Type]map[string]string)
+	joinFilterCacheMu sync.RWMutex
+)
+
 func joinFilterFieldDBName[T any](db *gorm.DB, fieldName string) (string, bool) {
+	tType := reflect.TypeOf((*T)(nil)).Elem()
+	joinFilterCacheMu.RLock()
+	m, ok := joinFilterCache[tType]
+	var dbName string
+	var present bool
+	if ok {
+		dbName, present = m[fieldName]
+	}
+	joinFilterCacheMu.RUnlock()
+	if present {
+		return dbName, true
+	}
+
 	stmt := &gorm.Statement{DB: db}
 	if err := stmt.Parse(new(T)); err != nil {
 		slog.Error("QueryPatcherJoinFilter schema parse failed", "field", fieldName, "error", err)
@@ -24,6 +44,16 @@ func joinFilterFieldDBName[T any](db *gorm.DB, fieldName string) (string, bool) 
 		slog.Error("QueryPatcherJoinFilter field missing", "field", fieldName)
 		return "", false
 	}
+
+	joinFilterCacheMu.Lock()
+	m, ok = joinFilterCache[tType]
+	if !ok {
+		m = make(map[string]string)
+		joinFilterCache[tType] = m
+	}
+	m[fieldName] = field.DBName
+	joinFilterCacheMu.Unlock()
+
 	return field.DBName, true
 }
 

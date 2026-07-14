@@ -2,7 +2,6 @@ package components
 
 import (
 	"context"
-	"reflect"
 	"slices"
 
 	"maragu.dev/gomponents"
@@ -28,6 +27,16 @@ type Page struct {
 	Roles []string
 }
 
+// GetKey returns the unique key identifier for this Page.
+func (p Page) GetKey() string {
+	return p.Key
+}
+
+// GetRoles returns the authorized roles required to view this Page.
+func (p Page) GetRoles() []string {
+	return p.Roles
+}
+
 // Render compiles the page component if the role in ctx (under key "$role") matches the required roles.
 // If the user's role is unauthorized, it returns an empty gomponents.Group node instead of the rendered output.
 func Render(p PageInterface, ctx context.Context) gomponents.Node {
@@ -43,15 +52,7 @@ func Render(p PageInterface, ctx context.Context) gomponents.Node {
 	return gomponents.Group{}
 }
 
-// GetRequiredRoles extracts the required roles list configured in the component's embedded Page structure using reflection.
+// GetRequiredRoles extracts the required roles list configured in the component's embedded Page structure.
 func GetRequiredRoles(p PageInterface) []string {
-	v := reflect.ValueOf(p)
-	if v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
-	page, ok := v.FieldByName("Page").Interface().(Page)
-	if !ok {
-		return nil
-	}
-	return page.Roles
+	return p.GetRoles()
 }

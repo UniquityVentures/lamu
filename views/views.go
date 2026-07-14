@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/UniquityVentures/lamu/components"
@@ -39,14 +40,32 @@ type View struct {
 	PageLookup func(name string) (components.PageInterface, bool)
 	// Layers represents the collection of middleware layers wrapping page views.
 	Layers     []registry.Pair[string, Layer]
+
+	mu            sync.RWMutex
+	cachedHandler http.Handler
 }
 
 // GetHandler compiles the View's middleware layers and rendering handlers into a single nested [http.Handler] flow.
 func (v *View) GetHandler() http.Handler {
+	v.mu.RLock()
+	if v.cachedHandler != nil {
+		h := v.cachedHandler
+		v.mu.RUnlock()
+		return h
+	}
+	v.mu.RUnlock()
+
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	if v.cachedHandler != nil {
+		return v.cachedHandler
+	}
+
 	var handler http.Handler = http.HandlerFunc(v.RenderPage)
 	for i := len(v.Layers) - 1; i >= 0; i-- {
 		handler = v.Layers[i].Value.Next(*v, handler)
 	}
+	v.cachedHandler = handler
 	return handler
 }
 
@@ -152,14 +171,20 @@ func (v *View) ParseForm(w http.ResponseWriter, r *http.Request) (map[string]any
 
 // WithLayer appends a new middleware layer block to the View execution stack.
 func (v *View) WithLayer(name string, layer Layer) *View {
+	v.mu.Lock()
+	defer v.mu.Unlock()
 	// Append layer; keys are labels only and are not required to be unique.
 	v.Layers = append(v.Layers, registry.Pair[string, Layer]{Key: name, Value: layer})
+	v.cachedHandler = nil
 	return v
 }
 
 // InsertLayerBefore inserts a middleware layer with the given name immediately before the first layer matching beforeName.
 // If the target layer is missing, it appends it to the end of the stack.
 func (v *View) InsertLayerBefore(beforeName, name string, layer Layer) *View {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.cachedHandler = nil
 	p := registry.Pair[string, Layer]{Key: name, Value: layer}
 	for i, mw := range v.Layers {
 		if mw.Key == beforeName {
@@ -168,12 +193,16 @@ func (v *View) InsertLayerBefore(beforeName, name string, layer Layer) *View {
 		}
 	}
 	// Fallback: behave like WithLayer when beforeName is not found.
-	return v.WithLayer(name, layer)
+	v.Layers = append(v.Layers, p)
+	return v
 }
 
 // InsertLayerAfter inserts a middleware layer with the given name immediately after the first layer matching afterName.
 // If the target layer is missing, it appends it to the end of the stack.
 func (v *View) InsertLayerAfter(afterName, name string, layer Layer) *View {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.cachedHandler = nil
 	p := registry.Pair[string, Layer]{Key: name, Value: layer}
 	for i, mw := range v.Layers {
 		if mw.Key == afterName {
@@ -188,19 +217,26 @@ func (v *View) InsertLayerAfter(afterName, name string, layer Layer) *View {
 		}
 	}
 	// Fallback: behave like WithLayer when afterName is not found.
-	return v.WithLayer(name, layer)
+	v.Layers = append(v.Layers, p)
+	return v
 }
 
 // WithLayers appends multiple middleware layer blocks to the View execution stack.
 func (v *View) WithLayers(layers ...registry.Pair[string, Layer]) *View {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.cachedHandler = nil
 	for _, layer := range layers {
-		v.WithLayer(layer.Key, layer.Value)
+		v.Layers = append(v.Layers, registry.Pair[string, Layer]{Key: layer.Key, Value: layer.Value})
 	}
 	return v
 }
 
 // PatchLayers applies function modifications to multiple middleware layers by matching keys.
 func (v *View) PatchLayers(layers ...registry.Pair[string, func(Layer) Layer]) *View {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.cachedHandler = nil
 	for _, layer := range layers {
 		for i, mw := range v.Layers {
 			if mw.Key == layer.Key {
@@ -213,6 +249,9 @@ func (v *View) PatchLayers(layers ...registry.Pair[string, func(Layer) Layer]) *
 
 // PatchLayer applies a function patcher to the first middleware layer matching the name key.
 func (v *View) PatchLayer(name string, patcher func(Layer) Layer) *View {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.cachedHandler = nil
 	for i, mw := range v.Layers {
 		if mw.Key == name {
 			v.Layers[i].Value = patcher(mw.Value)
